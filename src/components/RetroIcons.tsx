@@ -595,3 +595,68 @@ export const ChessFlipBoardIcon: React.FC<IconProps> = ({ size = 20, className =
     <polygon points="15,38 9,35 13,31" fill="#00aa44" stroke="#000000" strokeWidth="1" strokeLinejoin="round" />
   </svg>
 );
+
+// Custom 3D Isometric Chess Bot Head matching ChessDice & chess piece palette (viewBox 0 0 45 45)
+export const ChessBotIcon: React.FC<IconProps> = ({ size = 20, className = '' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 45 45"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`inline-block select-none ${className}`}
+    style={{ filter: 'drop-shadow(1px 1px 0px rgba(0,0,0,0.25))' }}
+  >
+    {/* Top Crown / Antenna Finial */}
+    <line x1="22.5" y1="3" x2="22.5" y2="8.5" stroke="#000000" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="22.5" cy="3.5" r="2.3" fill="#ffcc00" stroke="#000000" strokeWidth="1.4" />
+
+    {/* Isometric Cube Head - Top Face (#ffffff) */}
+    <polygon
+      points="22.5,7.5 37.5,15 22.5,22.5 7.5,15"
+      fill="#ffffff"
+      stroke="#000000"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    {/* Isometric Cube Head - Left Face (#f5f5f5 CRT screen bezel) */}
+    <polygon
+      points="7.5,15 22.5,22.5 22.5,39.5 7.5,32"
+      fill="#f5f5f5"
+      stroke="#000000"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    {/* Isometric Cube Head - Right Face (#181818 dark piece motif) */}
+    <polygon
+      points="22.5,22.5 37.5,15 37.5,32 22.5,39.5"
+      fill="#181818"
+      stroke="#000000"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+
+    {/* Subtle chess piece hatch lines */}
+    <line x1="26" y1="34" x2="34" y2="29" stroke="#404040" strokeWidth="1.2" />
+    <line x1="28" y1="30" x2="35" y2="26" stroke="#404040" strokeWidth="1.2" />
+
+    {/* Left Face Visor Screen (CRT dark green/blue with pixel eyes) */}
+    <polygon
+      points="10,18.5 20,23.5 20,31 10,26"
+      fill="#0a246a"
+      stroke="#000000"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
+    {/* Pixelated Bot Eyes */}
+    <rect x="11.8" y="21.5" width="2.2" height="2.4" fill="#33ff33" />
+    <rect x="16.2" y="23.7" width="2.2" height="2.4" fill="#33ff33" />
+
+    {/* Speaker grille / mouth line on lower left face */}
+    <line x1="11" y1="30.5" x2="19" y2="34.5" stroke="#000000" strokeWidth="1.6" strokeLinecap="round" />
+
+    {/* Right side status LED */}
+    <circle cx="30" cy="22" r="2" fill="#ffcc00" stroke="#000000" strokeWidth="1" />
+  </svg>
+);
+

@@ -103,3 +103,14 @@ export type ServerMessage =
   | { type: 'draw_declined' }
   | { type: 'rematch_offered'; byName: string }
   | { type: 'pong' };
+
+export type BotDifficulty = 'easy' | 'medium' | 'hard' | 'grandmaster';
+
+export interface BotSettings {
+  difficulty: BotDifficulty;
+  preferredColor: 'w' | 'b' | 'random';
+  timeControl: TimeControl;
+  botMessages: boolean;
+  botTrashTalk: boolean;
+}
+

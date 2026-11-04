@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { HomeLobby } from './components/HomeLobby';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import { SoloGame } from './components/SoloGame';
-import { TimeControl } from './types/chess';
+import { BotGame } from './components/BotGame';
+import { TimeControl, BotSettings } from './types/chess';
 import {
   isSoundEnabled,
   setSoundEnabled,
@@ -38,9 +39,16 @@ function getSavedPlayerName(): string {
 export default function App() {
   const [playerId] = useState<string>(() => getOrCreatePlayerId());
   const [playerName, setPlayerName] = useState<string>(() => getSavedPlayerName());
-  const [currentView, setCurrentView] = useState<'lobby' | 'multiplayer' | 'solo'>('lobby');
+  const [currentView, setCurrentView] = useState<'lobby' | 'multiplayer' | 'solo' | 'bot'>('lobby');
   const [currentRoomCode, setCurrentRoomCode] = useState<string>('');
   const [preferredColor, setPreferredColor] = useState<'w' | 'b' | 'random'>('random');
+  const [botSettings, setBotSettings] = useState<BotSettings>({
+    difficulty: 'medium',
+    preferredColor: 'random',
+    timeControl: { initialMinutes: 0, incrementSeconds: 0, name: 'Casual (No Clock)' },
+    botMessages: true,
+    botTrashTalk: true,
+  });
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showStartMenu, setShowStartMenu] = useState(false);
@@ -168,6 +176,10 @@ export default function App() {
               playWindowsClick();
               setCurrentView('solo');
             }}
+            onStartBotMatch={(settings) => {
+              setBotSettings(settings);
+              setCurrentView('bot');
+            }}
             isCreating={isCreatingRoom}
           />
         )}
@@ -184,6 +196,15 @@ export default function App() {
 
         {currentView === 'solo' && (
           <SoloGame onBack={() => setCurrentView('lobby')} />
+        )}
+
+        {currentView === 'bot' && (
+          <BotGame
+            playerId={playerId}
+            playerName={playerName.trim() || 'Guest'}
+            initialSettings={botSettings}
+            onBack={() => setCurrentView('lobby')}
+          />
         )}
       </main>
 
@@ -213,6 +234,16 @@ export default function App() {
               className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer font-bold"
             >
               Lobby & Home
+            </button>
+            <button
+              onClick={() => {
+                setShowStartMenu(false);
+                playWindowsClick();
+                setCurrentView('bot');
+              }}
+              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer"
+            >
+              Play vs. Chess Bot
             </button>
             <button
               onClick={() => {
@@ -283,6 +314,8 @@ export default function App() {
             <span className="truncate">
               {currentView === 'multiplayer'
                 ? `Matt's Chess [Room: ${currentRoomCode}]`
+                : currentView === 'bot'
+                ? "Matt's Chess [Bot]"
                 : currentView === 'solo'
                 ? "Matt's Chess [Solo]"
                 : "Matt's Chess [Lobby]"}

@@ -15,18 +15,19 @@ interface InGameChatProps {
   currentUserId: string;
   onSendMessage: (text: string) => void;
   onSendReaction: (emoji: string) => void;
+  typingIndicatorText?: string | null;
 }
 
 const BAR_EMOTICONS = [
   'smile',
   'big_grin',
+  'laugh',
   'wink',
   'tongueout',
   'cool',
-  'approve',
-  'wide_eyes',
   'clown',
-  'sad',
+  'cry',
+  'skull',
   'surprise',
 ];
 
@@ -35,6 +36,7 @@ export const InGameChat: React.FC<InGameChatProps> = ({
   currentUserId,
   onSendMessage,
   onSendReaction,
+  typingIndicatorText = null,
 }) => {
   const [inputText, setInputText] = useState('');
   const [showEmoticonPicker, setShowEmoticonPicker] = useState(false);
@@ -123,6 +125,14 @@ export const InGameChat: React.FC<InGameChatProps> = ({
           })
         )}
       </div>
+
+      {/* MSN Messenger Typing Indicator */}
+      {typingIndicatorText && (
+        <div className="px-2 py-0.5 bg-[#f4f2ea] border-x border-[#808080] text-[10px] text-[#505050] italic flex items-center gap-1.5 select-none">
+          <span className="inline-block w-1.5 h-1.5 bg-[#008000] animate-ping" />
+          <span>{typingIndicatorText}</span>
+        </div>
+      )}
 
       {/* MSN Emoticon Bar */}
       <div className="flex items-center justify-between py-1 px-1 bg-[#ece9d8] border-b border-[#808080] select-none text-xs">

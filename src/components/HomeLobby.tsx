@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { TimeControl, PublicLobbySummary } from '../types/chess';
+import { TimeControl, PublicLobbySummary, BotDifficulty, BotSettings } from '../types/chess';
+import { BOT_DIFFICULTY_CONFIG } from '../utils/chessBotEngine';
 import { ChessPiece } from './ChessPiece';
 import { ChessDice } from './ChessDice';
-import { RetroPawnIcon, RetroWarningIcon, RetroRefreshIcon, ChessCreateLobbyIcon } from './RetroIcons';
+import {
+  RetroPawnIcon,
+  RetroWarningIcon,
+  RetroRefreshIcon,
+  ChessCreateLobbyIcon,
+  ChessBotIcon,
+} from './RetroIcons';
 import { playWindowsClick, playWindowsStop, playWindowsStartup } from '../utils/audio';
 
 interface HomeLobbyProps {
@@ -15,6 +22,7 @@ interface HomeLobbyProps {
   }) => void;
   onJoinRoom: (code: string) => void;
   onStartSoloPlay: () => void;
+  onStartBotMatch: (settings: BotSettings) => void;
   initialCode?: string;
   isCreating?: boolean;
 }
@@ -28,12 +36,15 @@ const TIME_CONTROLS: TimeControl[] = [
   { initialMinutes: 0, incrementSeconds: 0, name: 'Casual (No Clock)' },
 ];
 
+const BOT_DIFFICULTIES: BotDifficulty[] = ['easy', 'medium', 'hard', 'grandmaster'];
+
 export const HomeLobby: React.FC<HomeLobbyProps> = ({
   userName,
   onUpdateUserName,
   onCreateRoom,
   onJoinRoom,
   onStartSoloPlay,
+  onStartBotMatch,
   initialCode = '',
   isCreating = false,
 }) => {
@@ -44,6 +55,13 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
   const [publicRooms, setPublicRooms] = useState<PublicLobbySummary[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Chess Bot Configuration State
+  const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>('medium');
+  const [botColor, setBotColor] = useState<'w' | 'b' | 'random'>('random');
+  const [botTimeControl, setBotTimeControl] = useState<TimeControl>(TIME_CONTROLS[5]);
+  const [botMessages, setBotMessages] = useState<boolean>(true);
+  const [botTrashTalk, setBotTrashTalk] = useState<boolean>(true);
 
   const fetchPublicRooms = async () => {
     setIsLoadingRooms(true);
@@ -88,8 +106,19 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
     });
   };
 
+  const handleStartBotClick = () => {
+    playWindowsStartup();
+    onStartBotMatch({
+      difficulty: botDifficulty,
+      preferredColor: botColor,
+      timeControl: botTimeControl,
+      botMessages,
+      botTrashTalk,
+    });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+    <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       {/* Windows 2000 Main Application Window */}
       <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] shadow-[3px_3px_0px_rgba(0,0,0,0.6)] select-none">
         {/* Title Bar */}
@@ -158,116 +187,118 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
 
         {/* Main Content Area */}
         <div className="p-3 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Host Game Group Box */}
-            <div className="border border-t-[#ffffff] border-l-[#ffffff] border-b-[#808080] border-r-[#808080] p-3 relative bg-[#ece9d8]">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+            {/* 1. Host Game Group Box */}
+            <div className="border border-t-[#ffffff] border-l-[#ffffff] border-b-[#808080] border-r-[#808080] p-3 relative bg-[#ece9d8] flex flex-col justify-between">
               <span className="absolute -top-2.5 left-3 bg-[#ece9d8] px-1 text-xs font-bold text-black font-sans">
                 Host a Match
               </span>
 
-              {/* Time Control */}
-              <div className="mb-3 mt-1">
-                <label className="block text-[11px] font-bold text-[#303030] mb-1">
-                  Time Control Setting:
-                </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {TIME_CONTROLS.map((tc) => {
-                    const isSelected = selectedTimeControl.name === tc.name;
-                    return (
-                      <button
-                        key={tc.name}
-                        type="button"
-                        onClick={() => {
-                          playWindowsClick();
-                          setSelectedTimeControl(tc);
-                        }}
-                        className={`px-2 py-1 text-left text-xs font-sans font-bold border-2 ${
-                          isSelected
-                            ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
-                            : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
-                        }`}
-                      >
-                        {tc.name}
-                      </button>
-                    );
-                  })}
+              <div>
+                {/* Time Control */}
+                <div className="mb-3 mt-1">
+                  <label className="block text-[11px] font-bold text-[#303030] mb-1">
+                    Time Control Setting:
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {TIME_CONTROLS.map((tc) => {
+                      const isSelected = selectedTimeControl.name === tc.name;
+                      return (
+                        <button
+                          key={tc.name}
+                          type="button"
+                          onClick={() => {
+                            playWindowsClick();
+                            setSelectedTimeControl(tc);
+                          }}
+                          className={`px-2 py-1 text-left text-xs font-sans font-bold border-2 ${
+                            isSelected
+                              ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                              : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                          }`}
+                        >
+                          {tc.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Play As */}
-              <div className="mb-3">
-                <label className="block text-[11px] font-bold text-[#303030] mb-1">
-                  Play as Side:
-                </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playWindowsClick();
-                      setPreferredColor('w');
-                    }}
-                    className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
-                      preferredColor === 'w'
-                        ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
-                        : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
-                    }`}
-                  >
-                    <div className="w-4 h-4">
-                      <ChessPiece type="k" color="w" />
-                    </div>
-                    <span>White</span>
-                  </button>
+                {/* Play As */}
+                <div className="mb-3">
+                  <label className="block text-[11px] font-bold text-[#303030] mb-1">
+                    Play as Side:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setPreferredColor('w');
+                      }}
+                      className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
+                        preferredColor === 'w'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4">
+                        <ChessPiece type="k" color="w" />
+                      </div>
+                      <span>White</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playWindowsClick();
-                      setPreferredColor('random');
-                    }}
-                    className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
-                      preferredColor === 'random'
-                        ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
-                        : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
-                    }`}
-                  >
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <ChessDice className="w-full h-full" />
-                    </div>
-                    <span>Random</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setPreferredColor('random');
+                      }}
+                      className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
+                        preferredColor === 'random'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        <ChessDice className="w-full h-full" />
+                      </div>
+                      <span>Random</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playWindowsClick();
-                      setPreferredColor('b');
-                    }}
-                    className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
-                      preferredColor === 'b'
-                        ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
-                        : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
-                    }`}
-                  >
-                    <div className="w-4 h-4">
-                      <ChessPiece type="k" color="b" />
-                    </div>
-                    <span>Black</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setPreferredColor('b');
+                      }}
+                      className={`p-1.5 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1.5 ${
+                        preferredColor === 'b'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4">
+                        <ChessPiece type="k" color="b" />
+                      </div>
+                      <span>Black</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Public toggle checkbox */}
-              <div className="mb-4 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="publicCheck"
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
-                  className="cursor-pointer"
-                />
-                <label htmlFor="publicCheck" className="text-xs text-black cursor-pointer font-sans">
-                  Publish lobby to public games directory
-                </label>
+                {/* Public toggle checkbox */}
+                <div className="mb-3 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="publicCheck"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="publicCheck" className="text-xs text-black cursor-pointer font-sans">
+                    Publish lobby to public games directory
+                  </label>
+                </div>
               </div>
 
               {/* Create Lobby Button */}
@@ -288,7 +319,196 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
               </button>
             </div>
 
-            {/* Join Game Group Box */}
+            {/* 2. Play vs. Chess Bot Group Box */}
+            <div className="border border-t-[#ffffff] border-l-[#ffffff] border-b-[#808080] border-r-[#808080] p-3 relative bg-[#ece9d8] flex flex-col justify-between">
+              <span className="absolute -top-2.5 left-3 bg-[#ece9d8] px-1 text-xs font-bold text-black font-sans">
+                Play vs. Chess Bot
+              </span>
+
+              <div>
+                {/* Difficulty 2x2 Selector */}
+                <div className="mb-2.5 mt-1">
+                  <label className="block text-[11px] font-bold text-[#303030] mb-1">
+                    Bot Difficulty:
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {BOT_DIFFICULTIES.map((diff) => {
+                      const cfg = BOT_DIFFICULTY_CONFIG[diff];
+                      const isSelected = botDifficulty === diff;
+                      return (
+                        <button
+                          key={diff}
+                          type="button"
+                          onClick={() => {
+                            playWindowsClick();
+                            setBotDifficulty(diff);
+                          }}
+                          title={`${cfg.botTitle} (${cfg.elo} ELO)`}
+                          className={`px-2 py-1 text-left text-xs font-sans font-bold border-2 flex items-center justify-between ${
+                            isSelected
+                              ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                              : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                          }`}
+                        >
+                          <span>{cfg.label}</span>
+                          <span
+                            className={`text-[10px] font-mono ${
+                              isSelected ? 'text-[#a6caf0]' : 'text-[#505050]'
+                            }`}
+                          >
+                            {cfg.elo}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Play As Side + Clock Compact Row */}
+                <div className="mb-2.5">
+                  <label className="block text-[11px] font-bold text-[#303030] mb-1">
+                    Play as Side:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setBotColor('w');
+                      }}
+                      className={`p-1 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1 ${
+                        botColor === 'w'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4">
+                        <ChessPiece type="k" color="w" />
+                      </div>
+                      <span>White</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setBotColor('random');
+                      }}
+                      className={`p-1 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1 ${
+                        botColor === 'random'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        <ChessDice className="w-full h-full" />
+                      </div>
+                      <span>Random</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playWindowsClick();
+                        setBotColor('b');
+                      }}
+                      className={`p-1 text-xs font-bold font-sans border-2 flex items-center justify-center gap-1 ${
+                        botColor === 'b'
+                          ? 'bg-[#0a246a] text-white border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]'
+                          : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
+                      }`}
+                    >
+                      <div className="w-4 h-4">
+                        <ChessPiece type="k" color="b" />
+                      </div>
+                      <span>Black</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Compact Time Control Select */}
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <label htmlFor="botClockSelect" className="text-[11px] font-bold text-[#303030]">
+                    Bot Clock:
+                  </label>
+                  <select
+                    id="botClockSelect"
+                    value={botTimeControl.name}
+                    onChange={(e) => {
+                      playWindowsClick();
+                      const found = TIME_CONTROLS.find((tc) => tc.name === e.target.value);
+                      if (found) setBotTimeControl(found);
+                    }}
+                    className="flex-1 bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-1.5 py-0.5 text-xs text-black font-bold font-sans focus:outline-hidden"
+                  >
+                    {TIME_CONTROLS.map((tc) => (
+                      <option key={tc.name} value={tc.name}>
+                        {tc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sunken Option Box: Bot Messages & Bot Trash Talk */}
+                <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] p-2 mb-3 space-y-1.5">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={botMessages}
+                      onChange={(e) => {
+                        playWindowsClick();
+                        const checked = e.target.checked;
+                        setBotMessages(checked);
+                        if (!checked) {
+                          setBotTrashTalk(false);
+                        }
+                      }}
+                      className="mt-0.5 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-black leading-tight font-sans">
+                      Bot Messages
+                      <span className="block text-[10px] font-normal text-[#505050]">
+                        bot messages you in the in-game messenger
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={botTrashTalk}
+                      onChange={(e) => {
+                        playWindowsClick();
+                        const checked = e.target.checked;
+                        setBotTrashTalk(checked);
+                        if (checked && !botMessages) {
+                          setBotMessages(true);
+                        }
+                      }}
+                      className="mt-0.5 cursor-pointer"
+                    />
+                    <span className="text-xs font-bold text-[#800000] leading-tight font-sans">
+                      Bot Trash Talk
+                      <span className="block text-[10px] font-normal text-[#505050]">
+                        bot trash talks during play
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Play vs Bot Launch Button */}
+              <button
+                type="button"
+                onClick={handleStartBotClick}
+                className="w-full py-2 bg-[#d4d0c8] hover:bg-white text-black font-bold font-sans text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer shadow-[1px_1px_0px_rgba(0,0,0,0.3)] flex items-center justify-center gap-2"
+              >
+                <ChessBotIcon size={20} />
+                <span>Play vs. Chess Bot</span>
+              </button>
+            </div>
+
+            {/* 3. Join Game Group Box */}
             <div className="border border-t-[#ffffff] border-l-[#ffffff] border-b-[#808080] border-r-[#808080] p-3 relative bg-[#ece9d8] flex flex-col justify-between">
               <span className="absolute -top-2.5 left-3 bg-[#ece9d8] px-1 text-xs font-bold text-black font-sans">
                 Join with Lobby Code
@@ -299,19 +519,19 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
                   <label className="block text-[11px] font-bold text-[#303030] mb-1">
                     Enter 6-Character Room Code:
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="text"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                       placeholder="e.g. 7X8K2M"
                       maxLength={8}
-                      className="flex-1 bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-3 py-1.5 text-base font-mono font-bold tracking-widest text-[#000080] focus:outline-hidden uppercase"
+                      className="flex-1 min-w-0 bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-2.5 py-1.5 text-sm font-mono font-bold tracking-widest text-[#000080] focus:outline-hidden uppercase"
                     />
                     <button
                       type="submit"
                       disabled={!joinCode.trim()}
-                      className="px-4 py-1.5 bg-[#d4d0c8] hover:bg-white disabled:opacity-50 text-black font-bold font-sans text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+                      className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white disabled:opacity-50 text-black font-bold font-sans text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer shrink-0"
                     >
                       Connect
                     </button>
