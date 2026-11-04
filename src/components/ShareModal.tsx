@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RetroCheckIcon } from './RetroIcons';
 import { playWindowsClick, playWindowsNotify } from '../utils/audio';
 
 interface ShareModalProps {
@@ -76,9 +77,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({ roomCode, onClose }) => 
               </span>
               <button
                 onClick={copyCode}
-                className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+                className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5"
               >
-                {copiedCode ? '✓ Copied' : 'Copy Code'}
+                {copiedCode ? (
+                  <>
+                    <RetroCheckIcon size={12} />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  'Copy Code'
+                )}
               </button>
             </div>
           </div>
@@ -95,9 +103,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({ roomCode, onClose }) => 
               />
               <button
                 onClick={copyLink}
-                className="px-3 py-1 bg-[#d4d0c8] hover:bg-white text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] shrink-0"
+                className="px-3 py-1 bg-[#d4d0c8] hover:bg-white text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] shrink-0 inline-flex items-center gap-1.5"
               >
-                {copiedLink ? '✓ Copied' : 'Copy Link'}
+                {copiedLink ? (
+                  <>
+                    <RetroCheckIcon size={12} />
+                    <span>Copied</span>
+                  </>
+                ) : (
+                  'Copy Link'
+                )}
               </button>
             </div>
           </div>

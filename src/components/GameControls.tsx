@@ -1,6 +1,23 @@
 import React, { useState } from 'react';
 import { GameStatus, PieceColor } from '../types/chess';
 import { isSoundEnabled, setSoundEnabled, playWindowsClick, playWindowsChord, playWindowsStop } from '../utils/audio';
+import {
+  RetroSpeakerIcon,
+  RetroClipboardIcon,
+  RetroFlipIcon,
+  RetroRefreshIcon,
+  RetroLightningIcon,
+  RetroDoorIcon,
+  RetroHandshakeIcon,
+  RetroFlagIcon,
+  RetroWarningIcon,
+  RetroBellIcon,
+  ChessReturnLobbyIcon,
+  ChessRematchIcon,
+  ChessAcceptRematchIcon,
+  ChessInviteClipboardIcon,
+  ChessFlipBoardIcon,
+} from './RetroIcons';
 
 interface GameControlsProps {
   status: GameStatus;
@@ -56,7 +73,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
       {opponentOfferedDraw && isGameActive && (
         <div className="w-full bg-[#ffffe0] border-2 border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff] p-2 flex items-center justify-between text-xs text-black">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#000080]">🔔 Opponent offered a Draw!</span>
+            <span className="font-bold text-[#000080] inline-flex items-center gap-1.5">
+              <RetroBellIcon size={14} />
+              <span>Opponent offered a Draw!</span>
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <button
@@ -88,16 +108,18 @@ export const GameControls: React.FC<GameControlsProps> = ({
             playWindowsClick();
             onFlipBoard();
           }}
-          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
         >
-          🔄 Flip Board
+          <ChessFlipBoardIcon size={15} />
+          <span>Flip Board</span>
         </button>
 
         <button
           onClick={handleToggleSound}
-          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
         >
-          {soundOn ? '🔊 Audio: ON' : '🔇 Audio: OFF'}
+          <RetroSpeakerIcon muted={!soundOn} size={14} />
+          <span>Audio: {soundOn ? 'ON' : 'OFF'}</span>
         </button>
 
         <button
@@ -105,9 +127,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
             playWindowsClick();
             onShareRoom();
           }}
-          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+          className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
         >
-          📋 Invite Link
+          <ChessInviteClipboardIcon size={15} />
+          <span>Invite Link</span>
         </button>
       </div>
 
@@ -120,9 +143,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
               onOfferDraw();
             }}
             disabled={userOfferedDraw}
-            className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] disabled:opacity-50 text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+            className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] disabled:opacity-50 text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
           >
-            {userOfferedDraw ? 'Draw Sent' : '🤝 Offer Draw'}
+            <RetroHandshakeIcon size={14} />
+            <span>{userOfferedDraw ? 'Draw Sent' : 'Offer Draw'}</span>
           </button>
 
           <button
@@ -130,9 +154,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
               playWindowsChord();
               setShowResignModal(true);
             }}
-            className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+            className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
           >
-            🏳️ Resign
+            <RetroFlagIcon size={14} />
+            <span>Resign</span>
           </button>
         </div>
       )}
@@ -146,13 +171,21 @@ export const GameControls: React.FC<GameControlsProps> = ({
                 playWindowsClick();
                 onRequestRematch();
               }}
-              className="px-3 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              className="px-3 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
             >
-              {rematchRequestedBy && rematchRequestedBy !== currentUserId
-                ? '⚡ Accept Rematch'
-                : rematchRequestedBy === currentUserId
-                ? 'Rematch Requested...'
-                : '🔁 Play Rematch'}
+              {rematchRequestedBy && rematchRequestedBy !== currentUserId ? (
+                <>
+                  <ChessAcceptRematchIcon size={15} />
+                  <span>Accept Rematch</span>
+                </>
+              ) : rematchRequestedBy === currentUserId ? (
+                <span>Rematch Requested...</span>
+              ) : (
+                <>
+                  <ChessRematchIcon size={15} />
+                  <span>Play Rematch</span>
+                </>
+              )}
             </button>
           )}
 
@@ -161,9 +194,10 @@ export const GameControls: React.FC<GameControlsProps> = ({
               playWindowsClick();
               onLeaveRoom();
             }}
-            className="px-3 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+            className="px-3 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
           >
-            🚪 Return to Lobby
+            <ChessReturnLobbyIcon size={15} />
+            <span>Return to Lobby</span>
           </button>
         </div>
       )}
@@ -183,8 +217,8 @@ export const GameControls: React.FC<GameControlsProps> = ({
             </div>
 
             <div className="px-3 py-2 flex items-start gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-yellow-400 border-2 border-black flex items-center justify-center font-bold text-lg text-black shrink-0">
-                !
+              <div className="shrink-0 pt-0.5">
+                <RetroWarningIcon size={28} />
               </div>
               <div>
                 <h4 className="font-bold text-xs text-black mb-1">

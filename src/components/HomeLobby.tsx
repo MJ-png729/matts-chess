@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TimeControl, PublicLobbySummary } from '../types/chess';
 import { ChessPiece } from './ChessPiece';
 import { ChessDice } from './ChessDice';
+import { RetroPawnIcon, RetroWarningIcon, RetroRefreshIcon, ChessCreateLobbyIcon } from './RetroIcons';
 import { playWindowsClick, playWindowsStop, playWindowsStartup } from '../utils/audio';
 
 interface HomeLobbyProps {
@@ -94,7 +95,7 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
         {/* Title Bar */}
         <div className="bg-gradient-to-r from-[#0a246a] via-[#104ba0] to-[#a6caf0] text-white font-bold text-xs sm:text-sm px-2 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-base leading-none">♟️</span>
+            <RetroPawnIcon size={16} color="w" />
             <span className="tracking-wide font-sans">Matt's Chess 2000 - Network Multiplayer Edition</span>
           </div>
           <div className="flex items-center gap-1">
@@ -150,7 +151,7 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
         {/* Error Notification */}
         {errorMsg && (
           <div className="m-2 p-2 bg-[#ffffe0] border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] text-xs text-[#990000] font-bold flex items-center gap-2">
-            <span>⚠️</span>
+            <RetroWarningIcon size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -274,9 +275,16 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
                 type="button"
                 disabled={isCreating}
                 onClick={handleCreateClick}
-                className="w-full py-2 bg-[#d4d0c8] hover:bg-white text-black font-bold font-sans text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer shadow-[1px_1px_0px_rgba(0,0,0,0.3)]"
+                className="w-full py-2 bg-[#d4d0c8] hover:bg-white text-black font-bold font-sans text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer shadow-[1px_1px_0px_rgba(0,0,0,0.3)] flex items-center justify-center gap-2"
               >
-                {isCreating ? 'Generating Room...' : '▶ Create Match Lobby'}
+                {isCreating ? (
+                  'Generating Room...'
+                ) : (
+                  <>
+                    <ChessCreateLobbyIcon size={20} />
+                    <span>Create Match Lobby</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -352,7 +360,14 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
                 disabled={isLoadingRooms}
                 className="px-3 py-0.5 bg-[#d4d0c8] hover:bg-white text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
               >
-                {isLoadingRooms ? 'Refreshing...' : '🔄 Refresh List'}
+                {isLoadingRooms ? (
+                  'Refreshing...'
+                ) : (
+                  <span className="inline-flex items-center gap-1.5">
+                    <RetroRefreshIcon size={12} />
+                    <span>Refresh List</span>
+                  </span>
+                )}
               </button>
             </div>
 

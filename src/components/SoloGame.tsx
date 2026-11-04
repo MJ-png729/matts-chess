@@ -5,6 +5,7 @@ import { CapturedPieces } from './CapturedPieces';
 import { MoveHistory } from './MoveHistory';
 import { ChessPiece } from './ChessPiece';
 import { SystemAlertToast, SystemAlert } from './SystemAlertToast';
+import { RetroPawnIcon, RetroFlipIcon, RetroNewGameIcon, RetroSpeakerIcon, ChessFlipBoardIcon } from './RetroIcons';
 import { MoveRecord, PieceColor } from '../types/chess';
 import {
   isSoundEnabled,
@@ -124,7 +125,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
         {/* Title Bar */}
         <div className="bg-gradient-to-r from-[#0a246a] via-[#104ba0] to-[#a6caf0] text-white font-bold text-xs sm:text-sm px-2 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>♟️</span>
+            <RetroPawnIcon size={16} color="w" />
             <span>Matt's Chess [Local Offline Pass & Play]</span>
           </div>
           <button
@@ -155,23 +156,26 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
                 playWindowsClick();
                 setOrientation(orientation === 'w' ? 'b' : 'w');
               }}
-              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5"
+              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 inline-flex items-center gap-1 cursor-pointer"
             >
-              🔄 <span className="underline">F</span>lip Board
+              <ChessFlipBoardIcon size={15} />
+              <span><span className="underline">F</span>lip Board</span>
             </button>
             <button
               onClick={handleReset}
-              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5"
+              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 inline-flex items-center gap-1"
             >
-              ✨ <span className="underline">N</span>ew Game
+              <RetroNewGameIcon size={13} />
+              <span><span className="underline">N</span>ew Game</span>
             </button>
           </div>
 
           <button
             onClick={toggleSound}
-            className="text-[11px] font-bold px-1.5 py-0.5 hover:bg-white border border-[#808080]"
+            className="text-[11px] font-bold px-1.5 py-0.5 hover:bg-white border border-[#808080] inline-flex items-center gap-1"
           >
-            {soundOn ? '🔊 Sound: ON' : '🔇 Sound: OFF'}
+            <RetroSpeakerIcon muted={!soundOn} size={13} />
+            <span>Sound: {soundOn ? 'ON' : 'OFF'}</span>
           </button>
         </div>
 

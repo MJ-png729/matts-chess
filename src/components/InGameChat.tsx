@@ -8,6 +8,7 @@ import {
   InsertEmoticonDialog,
   MsnGradientsDefs,
 } from './MsnEmoticons';
+import { RetroChatBubbleIcon } from './RetroIcons';
 
 interface InGameChatProps {
   messages: ChatMessage[];
@@ -80,7 +81,7 @@ export const InGameChat: React.FC<InGameChatProps> = ({
       {/* MSN Messenger Title bar */}
       <div className="bg-gradient-to-r from-[#0a246a] via-[#154694] to-[#a6caf0] text-white font-bold text-xs px-2 py-0.5 flex items-center justify-between mb-1 select-none font-sans">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px]">💬</span>
+          <RetroChatBubbleIcon size={13} />
           <span>Instant Messenger</span>
         </div>
         <span className="text-[10px] text-white/90 font-normal">Active Session</span>

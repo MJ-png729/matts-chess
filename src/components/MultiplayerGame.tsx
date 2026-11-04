@@ -11,6 +11,20 @@ import { ShareModal } from './ShareModal';
 import { WaitingRoom } from './WaitingRoom';
 import { ChessPiece } from './ChessPiece';
 import { SystemAlertToast, SystemAlert } from './SystemAlertToast';
+import {
+  RetroPawnIcon,
+  RetroClipboardIcon,
+  RetroFlipIcon,
+  RetroClockIcon,
+  RetroLightningIcon,
+  RetroRefreshIcon,
+  RetroDoorIcon,
+  ChessReturnLobbyIcon,
+  ChessRematchIcon,
+  ChessAcceptRematchIcon,
+  ChessInviteClipboardIcon,
+  ChessFlipBoardIcon,
+} from './RetroIcons';
 import { RoomState, ClientMessage, ServerMessage, PieceColor } from '../types/chess';
 import {
   playWindowsDing,
@@ -328,7 +342,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         {/* Title Bar */}
         <div className="bg-gradient-to-r from-[#0a246a] via-[#104ba0] to-[#a6caf0] text-white font-bold text-xs sm:text-sm px-2 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>♟️</span>
+            <RetroPawnIcon size={16} color="w" />
             <span>
               Matt's Chess [Room: {roomState.code}] - {topPlayer?.name || 'White'} vs{' '}
               {bottomPlayer?.name || 'Black'}
@@ -356,33 +370,39 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
                 playWindowsClick();
                 onLeave();
               }}
-              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5"
+              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
             >
-              ← <span className="underline">E</span>xit Room
+              <ChessReturnLobbyIcon size={16} />
+              <span><span className="underline">E</span>xit Room</span>
             </button>
             <button
               onClick={() => {
                 playWindowsClick();
                 setShowShareModal(true);
               }}
-              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5"
+              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
             >
-              📋 <span className="underline">I</span>nvite Friend
+              <ChessInviteClipboardIcon size={16} />
+              <span><span className="underline">I</span>nvite Friend</span>
             </button>
             <button
               onClick={() => {
                 playWindowsClick();
                 handleFlipBoard();
               }}
-              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5"
+              className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
             >
-              🔄 <span className="underline">F</span>lip View
+              <ChessFlipBoardIcon size={16} />
+              <span><span className="underline">F</span>lip View</span>
             </button>
           </div>
 
           <div className="flex items-center gap-2 text-[11px]">
             <span className="font-bold">Mode:</span>
-            <span>⏱️ {roomState.timeControl.name}</span>
+            <span className="inline-flex items-center gap-1">
+              <RetroClockIcon size={12} />
+              <span>{roomState.timeControl.name}</span>
+            </span>
             <span className="text-[#808080]">|</span>
             <span className={isConnected ? 'text-green-700 font-bold' : 'text-red-700 font-bold'}>
               ● {isConnected ? 'Online' : 'Disconnected'}
@@ -492,22 +512,31 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
                       playWindowsClick();
                       handleRequestRematch();
                     }}
-                    className="px-4 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+                    className="px-4 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_rgba(0,0,0,0.3)]"
                   >
-                    {roomState.rematchRequestedBy && roomState.rematchRequestedBy !== playerId
-                      ? '⚡ Accept Rematch'
-                      : roomState.rematchRequestedBy === playerId
-                      ? 'Rematch Sent...'
-                      : '🔁 Request Rematch'}
+                    {roomState.rematchRequestedBy && roomState.rematchRequestedBy !== playerId ? (
+                      <>
+                        <ChessAcceptRematchIcon size={16} />
+                        <span>Accept Rematch</span>
+                      </>
+                    ) : roomState.rematchRequestedBy === playerId ? (
+                      <span>Rematch Sent...</span>
+                    ) : (
+                      <>
+                        <ChessRematchIcon size={16} />
+                        <span>Request Rematch</span>
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => {
                       playWindowsClick();
                       onLeave();
                     }}
-                    className="px-4 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+                    className="px-4 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_rgba(0,0,0,0.3)]"
                   >
-                    🚪 Exit to Lobby
+                    <ChessReturnLobbyIcon size={16} />
+                    <span>Return to Lobby</span>
                   </button>
                 </div>
               </div>

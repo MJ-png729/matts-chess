@@ -10,6 +10,7 @@ import {
   playWindowsStop,
   playWindowsNotify,
 } from './utils/audio';
+import { RetroSpeakerIcon, RetroPawnIcon } from './components/RetroIcons';
 
 function getOrCreatePlayerId(): string {
   // Use sessionStorage so multiple tabs on the same computer have distinct player IDs
@@ -296,9 +297,9 @@ export default function App() {
             <button
               onClick={toggleSound}
               title={soundOn ? 'Click to Mute' : 'Click to Unmute'}
-              className="hover:scale-110 active:scale-95 transition cursor-pointer"
+              className="hover:scale-110 active:scale-95 transition cursor-pointer flex items-center justify-center"
             >
-              {soundOn ? '🔊' : '🔇'}
+              <RetroSpeakerIcon muted={!soundOn} size={15} />
             </button>
 
             {/* System Clock */}
@@ -328,7 +329,9 @@ export default function App() {
 
             <div className="p-3">
               <div className="flex items-center gap-3 mb-3">
-                <div className="text-3xl">♟️</div>
+                <div className="flex items-center justify-center">
+                  <RetroPawnIcon size={32} color="w" />
+                </div>
                 <div>
                   <h3 className="font-bold text-sm text-black">Matt's Chess</h3>
                   <p className="text-[11px] text-[#505050]">Version 1.02 (Build 2004)</p>
