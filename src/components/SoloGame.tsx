@@ -4,6 +4,7 @@ import { ChessBoard } from './ChessBoard';
 import { CapturedPieces } from './CapturedPieces';
 import { MoveHistory } from './MoveHistory';
 import { ChessPiece } from './ChessPiece';
+import { SystemAlertToast, SystemAlert } from './SystemAlertToast';
 import { MoveRecord, PieceColor } from '../types/chess';
 import {
   isSoundEnabled,
@@ -28,6 +29,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const [history, setHistory] = useState<MoveRecord[]>([]);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [gameOverMessage, setGameOverMessage] = useState<string | null>(null);
+  const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
 
   const handleMove = (from: string, to: string, promotion?: string) => {
     try {
@@ -62,13 +64,35 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       if (chess.isCheckmate()) {
         const winner = newTurn === 'w' ? 'Black' : 'White';
         setGameOverMessage(`Checkmate! ${winner} wins!`);
+        setSystemAlert({
+          id: `checkmate-${Date.now()}`,
+          type: 'checkmate',
+          title: 'System message',
+          message: `Checkmate! ${winner} wins!`,
+        });
         playWindowsTada();
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       } else if (chess.isDraw()) {
         setGameOverMessage('Game drawn!');
+        setSystemAlert({
+          id: `draw-${Date.now()}`,
+          type: 'info',
+          title: 'System message',
+          message: 'Game drawn!',
+        });
         playWindowsChord();
       } else if (chess.inCheck()) {
+        const inCheckColor = newTurn === 'w' ? 'White' : 'Black';
+        setSystemAlert({
+          id: `check-${Date.now()}`,
+          type: 'check',
+          title: 'System message',
+          message: `${inCheckColor} king in check!`,
+          autoDismissMs: 5000,
+        });
         playWindowsDing();
+      } else {
+        setSystemAlert((prev) => (prev?.type === 'check' ? null : prev));
       }
     } catch (e) {
       console.error(e);
@@ -83,6 +107,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     setTurn('w');
     setHistory([]);
     setGameOverMessage(null);
+    setSystemAlert(null);
   };
 
   const toggleSound = () => {
@@ -232,6 +257,9 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Retro Windows System Alert Toast in bottom-right */}
+      <SystemAlertToast alert={systemAlert} onDismiss={() => setSystemAlert(null)} />
     </div>
   );
 };

@@ -439,8 +439,7 @@ export default function App() {
               </div>
 
               <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] p-2 text-xs text-black mb-3 space-y-1">
-                <p>Authentic 2000s Windows-era multiplayer chess engine.</p>
-                <p>Features classic Fritz engraved piece sprites, warm amber wooden board, live lobby codes, and synthesized Windows sound effects.</p>
+                <p>hi im matt and i made chess website with google</p>
                 <p className="text-[10px] text-[#606060] pt-1">
                   Licensed to: {playerName}
                 </p>

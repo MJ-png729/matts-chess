@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
+import { Chess } from 'chess.js';
 import { ChessBoard } from './ChessBoard';
 import { ChessClock } from './ChessClock';
 import { CapturedPieces } from './CapturedPieces';
@@ -9,6 +10,7 @@ import { GameControls } from './GameControls';
 import { ShareModal } from './ShareModal';
 import { WaitingRoom } from './WaitingRoom';
 import { ChessPiece } from './ChessPiece';
+import { SystemAlertToast, SystemAlert } from './SystemAlertToast';
 import { RoomState, ClientMessage, ServerMessage, PieceColor } from '../types/chess';
 import {
   playWindowsDing,
@@ -49,6 +51,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [reactions, setReactions] = useState<FloatingReaction[]>([]);
   const [localClocks, setLocalClocks] = useState<{ w: number; b: number }>({ w: 0, b: 0 });
+  const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -142,8 +145,60 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
             if (won) {
               confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             }
+
+            if (data.state.status === 'checkmate') {
+              const winnerName = data.state.winner === 'w' ? 'White' : 'Black';
+              setSystemAlert({
+                id: `checkmate-${Date.now()}`,
+                type: 'checkmate',
+                title: 'System message',
+                message: `Checkmate! ${winnerName} wins!`,
+              });
+            } else if (data.state.status === 'resigned') {
+              const winnerName = data.state.winner === 'w' ? 'White' : 'Black';
+              setSystemAlert({
+                id: `resigned-${Date.now()}`,
+                type: 'info',
+                title: 'System message',
+                message: `Opponent resigned! ${winnerName} wins!`,
+              });
+            } else if (data.state.status === 'timeout') {
+              const winnerName = data.state.winner === 'w' ? 'White' : 'Black';
+              setSystemAlert({
+                id: `timeout-${Date.now()}`,
+                type: 'info',
+                title: 'System message',
+                message: `Time out! ${winnerName} wins!`,
+              });
+            } else if (data.state.status === 'draw' || data.state.status === 'stalemate') {
+              setSystemAlert({
+                id: `draw-${Date.now()}`,
+                type: 'info',
+                title: 'System message',
+                message: data.state.status === 'stalemate' ? 'Stalemate! Game drawn.' : 'Game drawn!',
+              });
+            }
           } else if (data.state.status === 'in_progress') {
             hasTriggeredGameOverRef.current = false;
+            // Check for king in check
+            try {
+              const currentChess = new Chess(data.state.fen);
+              if (currentChess.inCheck()) {
+                const inCheckColor = currentChess.turn() === 'w' ? 'White' : 'Black';
+                setSystemAlert({
+                  id: `check-${Date.now()}`,
+                  type: 'check',
+                  title: 'System message',
+                  message: `${inCheckColor} king in check!`,
+                  autoDismissMs: 5000,
+                });
+                playWindowsDing();
+              } else {
+                setSystemAlert((prev) => (prev?.type === 'check' ? null : prev));
+              }
+            } catch (e) {
+              console.error(e);
+            }
           }
         } else if (data.type === 'chat_broadcast') {
           setRoomState((prev) => {
@@ -584,6 +639,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       {showShareModal && (
         <ShareModal roomCode={roomState.code} onClose={() => setShowShareModal(false)} />
       )}
+
+      {/* Retro Windows System Alert Toast in bottom-right */}
+      <SystemAlertToast alert={systemAlert} onDismiss={() => setSystemAlert(null)} />
     </div>
   );
 };
