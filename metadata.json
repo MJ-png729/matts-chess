@@ -1,0 +1,8 @@
+{
+  "name": "Knightfall Chess - Multiplayer Lobby",
+  "description": "Play real-time multiplayer chess with friends online. Create custom rooms with 6-character lobby codes, live timers, sound effects, move history, and spectator mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
