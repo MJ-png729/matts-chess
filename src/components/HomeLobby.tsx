@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimeControl, PublicLobbySummary } from '../types/chess';
 import { ChessPiece } from './ChessPiece';
+import { ChessDice } from './ChessDice';
 import { playWindowsClick, playWindowsStop, playWindowsStartup } from '../utils/audio';
 
 interface HomeLobbyProps {
@@ -137,6 +138,7 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
               value={userName}
               onChange={(e) => onUpdateUserName(e.target.value)}
               maxLength={20}
+              placeholder="Guest"
               className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-2 py-0.5 text-xs text-black font-bold focus:outline-hidden w-40"
             />
           </div>
@@ -227,7 +229,9 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
                         : 'bg-[#d4d0c8] text-black border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] hover:bg-white'
                     }`}
                   >
-                    <span>🎲</span>
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      <ChessDice className="w-full h-full" />
+                    </div>
                     <span>Random</span>
                   </button>
 

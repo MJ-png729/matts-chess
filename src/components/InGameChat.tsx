@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '../types/chess';
 import { playWindowsNotify, playWindowsClick } from '../utils/audio';
+import {
+  MsnIcon,
+  MSN_EMOTICONS,
+  FormattedChatMessage,
+  InsertEmoticonDialog,
+  MsnGradientsDefs,
+} from './MsnEmoticons';
 
 interface InGameChatProps {
   messages: ChatMessage[];
@@ -9,7 +16,18 @@ interface InGameChatProps {
   onSendReaction: (emoji: string) => void;
 }
 
-const QUICK_EMOJIS = ['😀', '😎', '😮', '👏', '🔥', '👑', '🤝', '💀'];
+const BAR_EMOTICONS = [
+  'smile',
+  'big_grin',
+  'wink',
+  'tongueout',
+  'cool',
+  'approve',
+  'wide_eyes',
+  'clown',
+  'sad',
+  'surprise',
+];
 
 export const InGameChat: React.FC<InGameChatProps> = ({
   messages,
@@ -18,7 +36,9 @@ export const InGameChat: React.FC<InGameChatProps> = ({
   onSendReaction,
 }) => {
   const [inputText, setInputText] = useState('');
+  const [showEmoticonPicker, setShowEmoticonPicker] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const lastMsgCountRef = useRef(messages.length);
 
   useEffect(() => {
@@ -42,12 +62,28 @@ export const InGameChat: React.FC<InGameChatProps> = ({
     setInputText('');
   };
 
+  const handleInsertEmoticon = (shortcut: string) => {
+    playWindowsClick();
+    setInputText((prev) => (prev ? `${prev} ${shortcut}` : shortcut));
+    inputRef.current?.focus();
+  };
+
+  const handleQuickSendEmoticon = (shortcut: string) => {
+    playWindowsClick();
+    onSendMessage(shortcut);
+  };
+
   return (
-    <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 flex flex-col h-full shadow-[1px_1px_0px_rgba(0,0,0,0.3)]">
-      {/* Title bar */}
-      <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-0.5 flex items-center justify-between mb-1 select-none font-sans">
-        <span>Instant Messenger / Room Chat</span>
-        <span className="text-[10px] text-white/80 font-normal">Online</span>
+    <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 flex flex-col h-full shadow-[1px_1px_0px_rgba(0,0,0,0.3)] relative">
+      <MsnGradientsDefs />
+
+      {/* MSN Messenger Title bar */}
+      <div className="bg-gradient-to-r from-[#0a246a] via-[#154694] to-[#a6caf0] text-white font-bold text-xs px-2 py-0.5 flex items-center justify-between mb-1 select-none font-sans">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px]">💬</span>
+          <span>Instant Messenger</span>
+        </div>
+        <span className="text-[10px] text-white/90 font-normal">Active Session</span>
       </div>
 
       {/* Sunken Chat Log Box */}
@@ -57,7 +93,7 @@ export const InGameChat: React.FC<InGameChatProps> = ({
       >
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center text-[#808080] italic text-center text-[11px]">
-            Lobby chat opened. Say hello to your opponent!
+            Lobby conversation opened. Say hello to your opponent!
           </div>
         ) : (
           messages.map((msg) => {
@@ -73,43 +109,73 @@ export const InGameChat: React.FC<InGameChatProps> = ({
             const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             return (
-              <div key={msg.id} className="leading-tight">
+              <div key={msg.id} className="leading-normal break-words">
                 <span className="text-[10px] text-[#606060] mr-1">[{timeStr}]</span>
-                <span className={`font-bold mr-1 ${isMe ? 'text-[#0000aa]' : 'text-[#880000]'}`}>
+                <span className={`font-bold mr-1.5 ${isMe ? 'text-[#0000aa]' : 'text-[#880000]'}`}>
                   {isMe ? 'You' : msg.senderName}:
                 </span>
-                <span className="text-black select-text">{msg.text}</span>
+                <span className="text-black select-text text-xs">
+                  <FormattedChatMessage text={msg.text} />
+                </span>
               </div>
             );
           })
         )}
       </div>
 
-      {/* Emoticon Bar */}
-      <div className="flex items-center gap-1 py-1 px-1 bg-[#ece9d8] border-b border-[#808080] select-none">
-        <span className="text-[10px] text-[#404040] font-bold mr-1">Emotes:</span>
-        {QUICK_EMOJIS.map((emoji) => (
-          <button
-            key={emoji}
-            onClick={() => {
-              playWindowsClick();
-              onSendReaction(emoji);
-            }}
-            className="text-sm p-0.5 hover:bg-white active:scale-95 transition"
-            title={`Send ${emoji}`}
-          >
-            {emoji}
-          </button>
-        ))}
+      {/* MSN Emoticon Bar */}
+      <div className="flex items-center justify-between py-1 px-1 bg-[#ece9d8] border-b border-[#808080] select-none text-xs">
+        <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+          {BAR_EMOTICONS.map((id) => {
+            const emo = MSN_EMOTICONS.find((e) => e.id === id);
+            if (!emo) return null;
+            return (
+              <button
+                key={emo.id}
+                type="button"
+                onClick={() => handleInsertEmoticon(emo.shortcut)}
+                onDoubleClick={() => handleQuickSendEmoticon(emo.shortcut)}
+                className="p-1 hover:bg-white active:bg-[#d0c8b8] border border-transparent hover:border-[#808080] cursor-pointer flex items-center justify-center rounded-xs transition-colors"
+                title={`${emo.shortcut} (${emo.label}) - Click to insert, Double click to send`}
+              >
+                <MsnIcon id={emo.id} size={17} />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Emoticon Menu Trigger Button matching MSN Messenger */}
+        <button
+          type="button"
+          onClick={() => {
+            playWindowsClick();
+            setShowEmoticonPicker(!showEmoticonPicker);
+          }}
+          className={`px-1.5 py-0.5 text-[11px] font-sans font-bold flex items-center gap-1 border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] cursor-pointer ${
+            showEmoticonPicker ? 'bg-[#ece9d8] border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff]' : 'bg-[#d4d0c8] hover:bg-white'
+          }`}
+          title="Open MSN Emoticon Picker"
+        >
+          <MsnIcon id="smile" size={14} />
+          <span>Emoticons ▾</span>
+        </button>
       </div>
+
+      {/* Pop-up MSN "Insert emoticon" dialog */}
+      <InsertEmoticonDialog
+        isOpen={showEmoticonPicker}
+        onClose={() => setShowEmoticonPicker(false)}
+        onSelect={(shortcut) => handleInsertEmoticon(shortcut)}
+      />
 
       {/* Input row */}
       <form onSubmit={handleSubmit} className="mt-1 flex items-center gap-1">
         <input
+          ref={inputRef}
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Type message and press Enter..."
+          placeholder="Type message or emoticons (: , :-D, B-) )..."
           maxLength={200}
           className="flex-1 bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-2 py-1 text-xs text-black font-sans focus:outline-hidden"
         />

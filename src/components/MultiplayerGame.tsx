@@ -29,12 +29,6 @@ interface MultiplayerGameProps {
   onLeave: () => void;
 }
 
-interface FloatingReaction {
-  id: string;
-  emoji: string;
-  senderName: string;
-  x: number;
-}
 
 export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   roomCode,
@@ -49,7 +43,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState<'moves' | 'chat'>('moves');
   const [showShareModal, setShowShareModal] = useState(false);
-  const [reactions, setReactions] = useState<FloatingReaction[]>([]);
   const [localClocks, setLocalClocks] = useState<{ w: number; b: number }>({ w: 0, b: 0 });
   const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
 
@@ -208,17 +201,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
               chatMessages: [...prev.chatMessages, data.message],
             };
           });
-        } else if (data.type === 'reaction_broadcast') {
-          const newReaction: FloatingReaction = {
-            id: `react-${Date.now()}-${Math.random()}`,
-            emoji: data.emoji,
-            senderName: data.senderName,
-            x: 20 + Math.random() * 60,
-          };
-          setReactions((prev) => [...prev, newReaction]);
-          setTimeout(() => {
-            setReactions((prev) => prev.filter((r) => r.id !== newReaction.id));
-          }, 2400);
         }
       } catch (err) {
         console.error('WS message error:', err);
@@ -300,7 +282,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   };
 
   const handleSendReaction = (emoji: string) => {
-    sendMessage({ type: 'reaction', roomCode, playerId, emoji });
+    handleSendMessage(emoji);
   };
 
   const handleFlipBoard = () => {
@@ -439,21 +421,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
               />
             </div>
 
-            {/* Chess Board with Reactions */}
+            {/* Chess Board */}
             <div className="relative w-full max-w-[540px]">
-              {reactions.map((r) => (
-                <div
-                  key={r.id}
-                  style={{ left: `${r.x}%` }}
-                  className="absolute bottom-10 z-40 pointer-events-none transform -translate-x-1/2 flex flex-col items-center animate-bounce duration-1000"
-                >
-                  <span className="text-3xl drop-shadow-md">{r.emoji}</span>
-                  <span className="text-[9px] font-bold text-black bg-[#ffffe0] border border-black px-1 mt-0.5">
-                    {r.senderName}
-                  </span>
-                </div>
-              ))}
-
               <ChessBoard
                 fen={roomState.fen}
                 orientation={boardOrientation}

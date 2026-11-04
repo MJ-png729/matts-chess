@@ -55,7 +55,7 @@ export class GameManager {
 
     const hostPlayer: Player = {
       id: params.hostId,
-      name: params.hostName || 'Host',
+      name: params.hostName || 'Guest',
       color: assignedColor,
       isConnected: true,
     };
@@ -113,7 +113,7 @@ export class GameManager {
         const host = item.state.whitePlayer || item.state.blackPlayer;
         list.push({
           code,
-          hostName: host?.name || 'Player',
+          hostName: host?.name || 'Guest',
           timeControl: item.state.timeControl,
           playersCount,
           status: item.state.status,

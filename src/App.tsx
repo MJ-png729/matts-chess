@@ -7,10 +7,6 @@ import {
   isSoundEnabled,
   setSoundEnabled,
   playWindowsClick,
-  playWindowsStartup,
-  playWindowsDing,
-  playWindowsTada,
-  playWindowsChord,
   playWindowsStop,
   playWindowsNotify,
 } from './utils/audio';
@@ -33,7 +29,7 @@ function getSavedPlayerName(): string {
     sessionStorage.setItem('matts_chess_player_name', localSaved);
     return localSaved;
   }
-  const defaultName = 'Matt';
+  const defaultName = 'Guest';
   sessionStorage.setItem('matts_chess_player_name', defaultName);
   return defaultName;
 }
@@ -48,7 +44,6 @@ export default function App() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showSoundModal, setShowSoundModal] = useState(false);
   const [systemTime, setSystemTime] = useState('');
 
   // Clock in system tray
@@ -76,10 +71,10 @@ export default function App() {
   }, []);
 
   const handleUpdateUserName = (newName: string) => {
-    const trimmed = newName.trim();
-    if (trimmed) {
-      setPlayerName(trimmed);
-      localStorage.setItem('matts_chess_player_name', trimmed);
+    setPlayerName(newName);
+    if (newName.trim()) {
+      localStorage.setItem('matts_chess_player_name', newName.trim());
+      sessionStorage.setItem('matts_chess_player_name', newName.trim());
     }
   };
 
@@ -95,7 +90,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hostId: playerId,
-          hostName: playerName,
+          hostName: playerName.trim() || 'Guest',
           preferredColor: params.preferredColor,
           timeControl: params.timeControl,
           isPublic: params.isPublic,
@@ -180,7 +175,7 @@ export default function App() {
           <MultiplayerGame
             roomCode={currentRoomCode}
             playerId={playerId}
-            playerName={playerName}
+            playerName={playerName.trim() || 'Guest'}
             preferredColor={preferredColor}
             onLeave={handleLeaveMatch}
           />
@@ -208,26 +203,24 @@ export default function App() {
           </div>
 
           {/* Menu items */}
-          <div className="p-1 w-56 flex flex-col text-xs font-sans">
+          <div className="p-1 w-52 flex flex-col text-xs font-sans">
             <button
               onClick={() => {
                 setShowStartMenu(false);
                 handleLeaveMatch();
               }}
-              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center gap-2 cursor-pointer"
+              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer font-bold"
             >
-              <span>♟️</span>
-              <span className="font-bold">Lobby & New Game</span>
+              Lobby & Home
             </button>
             <button
               onClick={() => {
                 setShowStartMenu(false);
                 setCurrentView('solo');
               }}
-              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center gap-2 cursor-pointer"
+              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer"
             >
-              <span>🎮</span>
-              <span>Pass & Play (Local)</span>
+              Pass & Play (Local)
             </button>
             <div className="h-[1px] bg-[#808080] my-1 border-b border-white" />
             <a
@@ -237,30 +230,29 @@ export default function App() {
                 setShowStartMenu(false);
                 playWindowsNotify();
               }}
-              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center gap-2 cursor-pointer no-underline text-black"
+              className="px-3 py-1.5 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer no-underline text-blue-900 font-semibold text-xs"
             >
-              <span>💾</span>
-              <span className="font-semibold text-blue-900 hover:text-white">Download Zip for Render...</span>
+              Download Full Project Zip...
             </a>
-            <button
+            <a
+              href="/updates-only.zip"
+              download="updates-only.zip"
               onClick={() => {
                 setShowStartMenu(false);
-                setShowSoundModal(true);
+                playWindowsNotify();
               }}
-              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center gap-2 cursor-pointer"
+              className="px-3 py-1.5 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer no-underline text-emerald-800 font-semibold text-xs"
             >
-              <span>🔊</span>
-              <span>Windows Sound Effects...</span>
-            </button>
+              Download Changed Files Only (for GitHub Web)...
+            </a>
             <button
               onClick={() => {
                 setShowStartMenu(false);
                 setShowAboutModal(true);
               }}
-              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center gap-2 cursor-pointer"
+              className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer"
             >
-              <span>ℹ️</span>
-              <span>About Matt's Chess...</span>
+              About Matt's Chess...
             </button>
           </div>
         </div>
@@ -269,26 +261,24 @@ export default function App() {
       {/* Windows 2000 Taskbar */}
       <footer className="fixed bottom-0 left-0 right-0 h-8 bg-[#d4d0c8] border-t-2 border-[#ffffff] flex items-center justify-between px-1 z-40 shadow-[0_-1px_0px_rgba(0,0,0,0.3)]">
         <div className="flex items-center gap-1.5 h-full py-0.5">
-          {/* Start Button */}
+          {/* Menu Button (previously Start) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               playWindowsClick();
               setShowStartMenu(!showStartMenu);
             }}
-            className={`h-full px-2.5 font-sans font-black text-xs flex items-center gap-1.5 border-2 ${
+            className={`h-full px-3 font-sans font-black text-xs flex items-center border-2 ${
               showStartMenu
                 ? 'border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff] bg-[#ece9d8]'
                 : 'border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] bg-[#d4d0c8] hover:bg-[#e4e0d8]'
             } active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer`}
           >
-            <span className="text-sm">♟️</span>
-            <span className="tracking-wide">Start</span>
+            <span className="tracking-wide">Menu</span>
           </button>
 
           {/* Running window button */}
           <div className="h-full px-3 bg-[#ece9d8] border-2 border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff] flex items-center gap-1.5 text-xs font-bold text-black max-w-[200px] truncate shadow-inner">
-            <span>♟️</span>
             <span className="truncate">
               {currentView === 'multiplayer'
                 ? `Matt's Chess [Room: ${currentRoomCode}]`
@@ -302,23 +292,11 @@ export default function App() {
         {/* System Tray */}
         <div className="h-full py-0.5 flex items-center">
           <div className="h-full px-2 bg-[#d4d0c8] border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] flex items-center gap-2.5 text-[11px] font-mono text-black">
-            {/* Quick sound test button */}
-            <button
-              onClick={() => {
-                playWindowsClick();
-                setShowSoundModal(true);
-              }}
-              title="Windows Sound Board"
-              className="hover:scale-110 active:scale-95 transition"
-            >
-              🎵
-            </button>
-
             {/* Mute toggle */}
             <button
               onClick={toggleSound}
               title={soundOn ? 'Click to Mute' : 'Click to Unmute'}
-              className="hover:scale-110 active:scale-95 transition"
+              className="hover:scale-110 active:scale-95 transition cursor-pointer"
             >
               {soundOn ? '🔊' : '🔇'}
             </button>
@@ -329,88 +307,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Windows Sound Board Modal */}
-      {showSoundModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
-          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
-            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-2">
-              <span>Windows Sound Scheme Player</span>
-              <button
-                onClick={() => {
-                  playWindowsClick();
-                  setShowSoundModal(false);
-                }}
-                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center"
-              >
-                ×
-              </button>
-            </div>
 
-            <div className="p-3">
-              <p className="text-xs text-black mb-3">
-                Click any button to preview authentic 2000s Windows sound synthesizers:
-              </p>
-
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <button
-                  onClick={() => playWindowsStartup()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>🎺</span>
-                  <span>Startup Chime</span>
-                </button>
-                <button
-                  onClick={() => playWindowsTada()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>🎉</span>
-                  <span>Tada! (Victory)</span>
-                </button>
-                <button
-                  onClick={() => playWindowsDing()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>🔔</span>
-                  <span>Ding (Check)</span>
-                </button>
-                <button
-                  onClick={() => playWindowsChord()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>🎻</span>
-                  <span>Chord (Resign)</span>
-                </button>
-                <button
-                  onClick={() => playWindowsStop()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>🛑</span>
-                  <span>Critical Stop</span>
-                </button>
-                <button
-                  onClick={() => playWindowsNotify()}
-                  className="px-3 py-1.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] flex items-center gap-1.5"
-                >
-                  <span>💬</span>
-                  <span>Exclamation</span>
-                </button>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    playWindowsClick();
-                    setShowSoundModal(false);
-                  }}
-                  className="px-4 py-1 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* About Matt's Chess Modal */}
       {showAboutModal && (
@@ -441,7 +338,7 @@ export default function App() {
               <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] p-2 text-xs text-black mb-3 space-y-1">
                 <p>hi im matt and i made chess website with google</p>
                 <p className="text-[10px] text-[#606060] pt-1">
-                  Licensed to: {playerName}
+                  Licensed to: {playerName.trim() || 'Guest'}
                 </p>
               </div>
 
