@@ -50,6 +50,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
   onShareRoom,
 }) => {
   const [showResignModal, setShowResignModal] = useState(false);
+  const [showOfferDrawModal, setShowOfferDrawModal] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   const isPlayer = userRole === 'white' || userRole === 'black';
@@ -69,38 +70,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
   return (
     <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-2 flex flex-wrap items-center justify-between gap-2 shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
-      {/* Draw Offer Notification */}
-      {opponentOfferedDraw && isGameActive && (
-        <div className="w-full bg-[#ffffe0] border-2 border-t-[#404040] border-l-[#404040] border-b-[#ffffff] border-r-[#ffffff] p-2 flex items-center justify-between text-xs text-black">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#000080] inline-flex items-center gap-1.5">
-              <RetroBellIcon size={14} />
-              <span>Opponent offered a Draw!</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                playWindowsClick();
-                onRespondDraw(true);
-              }}
-              className="px-2.5 py-0.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
-            >
-              Accept
-            </button>
-            <button
-              onClick={() => {
-                playWindowsClick();
-                onRespondDraw(false);
-              }}
-              className="px-2.5 py-0.5 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
-            >
-              Decline
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Control Action Buttons */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <button
@@ -140,7 +109,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
           <button
             onClick={() => {
               playWindowsClick();
-              onOfferDraw();
+              setShowOfferDrawModal(true);
             }}
             disabled={userOfferedDraw}
             className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] disabled:opacity-50 text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
@@ -222,7 +191,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
               </div>
               <div>
                 <h4 className="font-bold text-xs text-black mb-1">
-                  Are you sure you want to resign the game?
+                  are you sure you want to resign?
                 </h4>
                 <p className="text-[11px] text-[#404040]">
                   This will concede the match to your opponent immediately.
@@ -249,6 +218,105 @@ export const GameControls: React.FC<GameControlsProps> = ({
                 className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
               >
                 Yes, Resign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offer Draw Confirmation Dialog */}
+      {showOfferDrawModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Offer Draw</span>
+              <button
+                onClick={() => setShowOfferDrawModal(false)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroHandshakeIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Offer a draw to your opponent?
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  A draw offer dialog will appear on your opponent's screen asking them to accept or decline.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setShowOfferDrawModal(false);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setShowOfferDrawModal(false);
+                  onOfferDraw();
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#000080] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              >
+                Yes, Offer Draw
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Opponent Offered Draw - Full Modal Popup Dialog */}
+      {opponentOfferedDraw && isGameActive && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full animate-bounce-short">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Draw Offer Received</span>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroHandshakeIcon size={32} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Opponent has offered a draw!
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  Do you want to accept the draw offer and conclude the match with a tie?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  onRespondDraw(false);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              >
+                Decline
+              </button>
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  onRespondDraw(true);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#000080] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              >
+                Accept Draw
               </button>
             </div>
           </div>

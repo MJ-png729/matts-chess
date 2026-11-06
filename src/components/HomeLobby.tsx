@@ -61,18 +61,19 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
   const [botColor, setBotColor] = useState<'w' | 'b' | 'random'>('random');
   const [botTimeControl, setBotTimeControl] = useState<TimeControl>(TIME_CONTROLS[5]);
   const [botMessages, setBotMessages] = useState<boolean>(true);
-  const [botTrashTalk, setBotTrashTalk] = useState<boolean>(true);
+  const [botTrashTalk, setBotTrashTalk] = useState<boolean>(false);
 
   const fetchPublicRooms = async () => {
     setIsLoadingRooms(true);
     try {
       const res = await fetch('/api/rooms');
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         setPublicRooms(data.rooms || []);
       }
     } catch (e) {
-      console.error('Failed to fetch rooms', e);
+      // Quietly ignore transient dev server refresh hiccups
     } finally {
       setIsLoadingRooms(false);
     }
@@ -653,7 +654,7 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
             Protocol: WebSocket 2000
           </div>
           <div className="col-span-4 px-2 py-0.5 border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] bg-[#ece9d8] truncate text-black font-medium">
-            Matt's Chess Engine v1.02
+            Matt's Chess Engine v1.03
           </div>
         </div>
       </div>

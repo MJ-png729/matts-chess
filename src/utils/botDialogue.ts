@@ -52,193 +52,211 @@ function pickLine(key: string, lines: string[]): string {
 
 /**
  * Chill casual lowercase texting mode (when Bot Messages is ON, but Bot Trash Talk is OFF).
- * Sounds like a real person texting, just without the disrespect or swearing.
+ * Sounds like a real person texting without emojis in normal moves.
  */
 const CASUAL_LINES: Record<BotChatEvent, string[]> = {
   game_start: [
-    'yo glhf :-)',
+    'yo glhf',
     'alr let us run it, good luck',
-    'what opening you gonna play today :-D',
+    'what opening you gonna play today',
     'sup, ready whenever you are',
   ],
   bot_move_normal: [
     'hmm let me try this',
     'lowkey interesting position tbh',
     'alr your turn',
-    'let us see what you got :-)',
+    'let us see what you got',
     'just developing the pieces',
+    'solid move tbh',
   ],
   bot_winning_big: [
-    'okay wait my position is actually kind of clean rn :-D',
+    'okay wait my position is actually kind of clean rn',
     'up a bunch of material now icl',
   ],
   bot_losing_big: [
     'oof i am down bad on this board 😭',
     'alr somehow i gotta find a miracle here 🙏',
+    'you are completely outplaying me rn ngl',
   ],
   bot_capture: [
-    'i will take that :-)',
+    'i will take that',
     'yoink',
     'free pawn icl',
+    'taking that piece',
   ],
   bot_capture_major: [
-    'ooh big capture :-D',
+    'ooh big capture',
     'had my eye on that square for a sec',
   ],
   bot_capture_queen: [
-    'wait did i just get the queen 8-o',
+    'wait did i just get the queen',
     'ooh catching the queen shifts everything',
   ],
   player_capture: [
     'clean trade',
     'alr i see the vision',
-    'fair enough :-)',
+    'fair enough',
   ],
   player_capture_major: [
-    'oof did not see that coming ngl :(',
+    'oof did not see that coming ngl',
     'alr you got me there, well played',
   ],
   bot_check: [
-    'check ;-)',
-    'watch your king :-P',
+    'check',
+    'watch your king',
   ],
   player_check: [
     'ooh nice check',
     'alr stepping out of check',
   ],
   player_blunder: [
-    'wait... are you sure about that square 8-o',
-    'ooh i think that piece might be hanging :-/',
+    'wait... are you sure about that square',
+    'ooh i think that piece might be hanging',
+    'did you mean to put that there 😭',
   ],
   player_blunder_queen: [
-    'wait did you mean to move your queen there 8-o',
-    'oof queen might be trapped there :(',
+    'wait did you mean to move your queen there',
+    'oof queen might be trapped there',
+    'wait is your queen hung 😭',
   ],
   player_missed_mate: [
-    'wait i think you might have had mate there 8-o',
+    'wait i think you might have had mate there',
     'phew thought i was cooked for a second 😭',
   ],
   player_missed_win: [
-    'wait i left a piece hanging and got away with it 😂',
+    'wait i left a piece hanging and got away with it',
   ],
   bot_promotion: [
-    'new queen on the board :-D',
+    'new queen on the board',
     'pawn finally made it across',
   ],
   player_promotion: [
-    'nice promotion, things just got real :-D',
+    'nice promotion, things just got real',
   ],
   draw_accept: [
-    'fair game, i will take the draw :-)',
-    'good match, draw accepted ^-)',
+    'fair game, i will take the draw',
+    'good match, draw accepted',
   ],
   draw_decline: [
-    'still a lot of game left tbh, let us keep playing :-)',
+    'still a lot of game left tbh, let us keep playing',
   ],
   bot_win: [
-    'checkmate! gg :-D down for a rematch?',
+    'checkmate! gg, down for a rematch?',
     'gg that was a fun one',
   ],
   player_win: [
-    'gg! you outplayed me there :-D',
-    'checkmated me clean, rematch? :-)',
+    'gg! you outplayed me there',
+    'checkmated me clean, rematch?',
   ],
   player_resign: [
-    'gg! hit rematch whenever you want another round :-)',
+    'gg! hit rematch whenever you want another round',
   ],
   draw_game: [
-    'gg! dead even match :-)',
+    'gg! dead even match',
   ],
   trash_talk_toggled_on: [
-    'oh we turning the heat up now? bet :-D',
+    'oh we turning the heat up now? bet',
   ],
 };
 
 /**
- * Unfiltered "Chess Menace" mode: lowercase, slang, sarcastic, cocky, funny, uses 😭 💀 😂 🤡 🙏 🗿,
- * celebrates blunders, roasts questionable moves, and never sounds like an AI tutor.
+ * Unfiltered "Chess Menace" mode: lowercase, slang, sarcastic, cocky, funny, competitive.
+ * Emojis are reserved mostly for blunders, queen donations, missed mates, big swings, and wins/losses,
+ * while regular moves and normal captures are text-only slang.
  */
 const TRASH_TALK_LINES: Record<BotChatEvent, string[]> = {
   game_start: [
-    'try not to embarrass yourself today 🙏',
-    'hope you actually know how the horsey moves 💀',
-    'another free elo farm let us go 😭',
-    'do not play some boring ass opening pls 🗿',
-    'alr let us see how fast this takes 😂',
+    'try not to embarrass yourself today',
+    'hope you actually know how the horsey moves',
+    'another free elo farm let us go',
+    'do not play some boring ass opening pls',
+    'alr let us see how fast this takes',
+    'make your move already',
   ],
   bot_move_normal: [
-    'bro is staring at the screen like it is gonna help 😭',
-    'what is your plan here genuinely 💀',
-    'you lowkey just clicking random squares rn 😂',
-    'take your time i already know how this ends 🗿',
+    'bro is staring at the screen like it is gonna help',
+    'what is your plan here genuinely',
+    'you lowkey just clicking random squares rn',
+    'take your time i already know how this ends',
     'icl this position is already looking rough for you',
-    'wyd bro 😭 play chess',
+    'wyd bro play chess',
+    'hurry up i am getting bored',
+    'not looking too good for you over there',
   ],
   bot_winning_big: [
+    'this is getting embarrassing for you ngl',
     'this is getting embarrassing for you ngl 😭',
     'might as well hit resign now and save us both the time 💀',
+    'pack it up bro it is completely over',
     'pack it up bro it is completely over 😂',
-    'icl it is getting real ugly on this board 🗿',
+    'icl it is getting real ugly on this board',
     'bro is playing for vibes at this point 😭🙏',
-    'just resign tbh why drag this out 😂😂',
+    'just resign tbh why drag this out',
   ],
   bot_losing_big: [
-    'okay chill i was barely even paying attention 🗿',
-    'don not get cocky now i am locking in',
+    'okay chill i was barely even paying attention',
+    'do not get cocky now i am locking in',
     'bro sweating like there is prize money on the line 😭',
-    'enjoy the lead while it lasts 🤡',
+    'enjoy the lead while it lasts',
   ],
   bot_capture: [
-    'yoink 😭 thanks',
-    'free piece don not mind if i do 💀',
-    'bro just leaving stuff undefended like it is charity 😂',
+    'yoink thanks',
+    'free piece do not mind if i do',
+    'bro just leaving stuff undefended like it is charity',
     'too easy ngl',
+    'hand over the piece',
   ],
   bot_capture_major: [
     'bro just let me take that for free 😭💀',
+    'what were you even looking at ahahaha',
     'what were you even looking at ahahaha 😂😂',
     'it is genuinely over for you now 💀',
-    'thank you kindly 🗿🙏',
+    'thank you kindly 🙏',
   ],
   bot_capture_queen: [
     'BRO JUST DONATED THE QUEEN 💀💀',
-    'yo thanks for the queen lmao 😭😭😭',
-    'did you just hand me your queen on a silver platter 😂💀',
+    'yo thanks for the queen lmao 😭😭',
+    'did you just hand me your queen on a silver platter 💀',
     'RIP THE QUEEN 💀 pack your bags bro',
   ],
   player_capture: [
-    'congrats you took one piece want a trophy 😭',
-    'bro thinks he is cooking rn 💀',
-    'yeah whatever enjoy that 🗿',
-    'oh no anyway 😂',
+    'congrats you took one piece want a trophy',
+    'bro thinks he is cooking rn',
+    'yeah whatever enjoy that',
+    'oh no anyway',
   ],
   player_capture_major: [
+    'okay wtf was that lucky ass square',
     'okay wtf was that 😭 lucky ass square',
-    'bro finally opened his eyes 💀',
-    'alr chill grandmaster i am locking back in 🗿',
-    'aint no way i left that there 😭😭',
+    'bro finally opened his eyes',
+    'alr chill grandmaster i am locking back in',
+    'aint no way i left that there 😭',
   ],
   bot_check: [
+    'check, run bro run',
     'check 💀 run bro run',
+    'where is your king going rn',
     'where is your king going rn 😂',
-    'knock knock bitch check 😭💀',
-    'got your king scrambling ahahaha 😂',
+    'knock knock check 💀',
+    'got your king scrambling ahahaha',
   ],
   player_check: [
-    'cute little check 💀 means literally nothing',
+    'cute little check, means literally nothing',
     'stop spamming pointless checks clown 🤡',
-    'ooh a check 😭 am i supposed to be scared',
-    'yeah ok move on 🗿',
+    'ooh a check, am i supposed to be scared',
+    'yeah ok move on',
   ],
   player_blunder: [
     'nahhhhh 😭 you actually thought that was a good move?',
     'bro what was that move 💀',
-    'BRO JUST DONATED THE QUEEN 💀💀',
-    'aint no way you just played that 😭😭',
+    'aint no way you just played that 😭',
     'my eyes genuinely hurt looking at that move 💀',
     'what am i even looking at right now 🗿',
-    'did you close your eyes and click a random square 😭',
-    'bro thinks he is playing checkers 😂🤡',
+    'did you close your eyes and click a random square',
+    'bro thinks he is playing checkers 😂',
+    'bro what was that move',
+    'nahhhhh you actually thought that was a good move?',
+    'aint no way you just played that',
     '💀',
     '🗿',
     '...',
@@ -246,67 +264,67 @@ const TRASH_TALK_LINES: Record<BotChatEvent, string[]> = {
   player_blunder_queen: [
     'BRO JUST DONATED THE QUEEN 💀💀',
     'bro... your queen 😭😭',
-    'did you just give me your queen for free?? 😂💀',
+    'did you just give me your queen for free?? 💀',
     'aint no way you just hung the queen like that 😭🙏',
-    'yo thank god you are blind 💀😂 free queen',
+    'yo thank god you are blind 💀 free queen',
   ],
   player_missed_mate: [
     'you had ONE job 😭',
     'bro really had checkmate right there and walked past it 💀😂',
-    'aint no way you missed mate 💀😭😭',
-    'how did you not see mate bro 😂🙏 i am dying',
+    'aint no way you missed mate 💀😭',
+    'how did you not see mate bro 😂 i am dying',
     'thank god you are blind 🙏😭',
   ],
   player_missed_win: [
-    'bro missed a whole free piece 😂😂',
+    'bro missed a whole free piece 😂',
     'tunnel vision going crazy rn 💀',
-    'you really just ignored a free capture icl 😭',
+    'you really just ignored a free capture icl',
   ],
   bot_promotion: [
     'new queen spawned 💀 pray for your king 🙏',
-    'two queens on the board now 😂 good luck',
-    'pawn made it all the way 😭 it is over',
+    'two queens on the board now, good luck',
+    'pawn made it all the way, it is over 💀',
   ],
   player_promotion: [
-    'ok chill with the lucky pawn push 🗿',
+    'ok chill with the lucky pawn push',
     'bro actually promoted 💀 alright bet',
   ],
   draw_accept: [
     'alr take your bailout draw and run 😭',
-    'you got so damn lucky i clicked accept 🙏😂',
+    'you got so damn lucky i clicked accept 🙏',
   ],
   draw_decline: [
-    'a draw?? 💀 ahahaha hell no finish the game',
-    'begging for a draw already is crazy 😭😂',
-    'nah we playing this out 🗿 hold this checkmate',
-    'bro really tried to finesse a draw 😂🤡',
+    'a draw?? ahahaha hell no finish the game',
+    'begging for a draw already is crazy 😭',
+    'nah we playing this out, hold this checkmate 💀',
+    'bro really tried to finesse a draw 🤡',
   ],
   bot_win: [
     'gg. well actually not gg. that was a public execution 😭',
     'get cooked 💀 never touch a chessboard again 😂',
-    'checkmate 😭😭 too damn easy',
-    'sit down 😂 bro got dismantled in 4k 💀',
+    'checkmate 😭 too damn easy',
+    'sit down, bro got dismantled in 4k 💀',
     'public execution fr 😭🙏 run it back if you dare',
-    'lightwork 😂😂',
+    'lightwork',
   ],
   player_win: [
     'nah run that back. we are not talking about this game.',
     'lag. definitely lag 🗿 rematch rn',
-    'don not even screenshot that 😂 run it back immediately',
+    'do not even screenshot that, run it back immediately',
     'bro had stockfish open on the second monitor 💀 rematch me',
     'okay you got lucky as hell 😭 run that back',
   ],
   player_resign: [
     'ahaha rage quit 😭 smartest move you made all game 💀',
-    'folded like a lawn chair 😂 can not even blame you tbh',
-    'yea i would have resigned too ngl 😭💀',
+    'folded like a lawn chair, can not even blame you tbh',
+    'yea i would have resigned too ngl 💀',
   ],
   draw_game: [
-    'how tf did you survive into a draw 😭💀',
-    'got away with highway robbery getting a draw there 😂🗿',
+    'how tf did you survive into a draw 💀',
+    'got away with highway robbery getting a draw there 🗿',
   ],
   trash_talk_toggled_on: [
-    'oh we doing trash talk now?? say less bitch 😭💀',
+    'oh we doing trash talk now?? say less 💀',
   ],
 };
 
@@ -322,40 +340,39 @@ export function getBotEventMessage(
 ): string | null {
   if (!botMessages) return null;
 
-  // Map blunder_queen / missed_mate carefully when not in trash talk mode
   const bank = botTrashTalk ? TRASH_TALK_LINES : CASUAL_LINES;
 
   // On quiet moves, check if bot is winning or losing huge to talk trash about the board state
   if (event === 'bot_move_normal') {
     const evalCp = ctx.evalCp ?? 0;
     if (evalCp >= 320 && (ctx.moveCount ?? 0) >= 8) {
-      if (Math.random() < (botTrashTalk ? 0.55 : 0.35)) {
+      if (Math.random() < (botTrashTalk ? 0.45 : 0.3)) {
         return pickLine(`${botTrashTalk ? 'trash' : 'casual'}_bot_winning_big`, bank.bot_winning_big);
       }
       return null;
     }
     if (evalCp <= -360 && (ctx.moveCount ?? 0) >= 8) {
-      if (Math.random() < (botTrashTalk ? 0.42 : 0.3)) {
+      if (Math.random() < (botTrashTalk ? 0.35 : 0.25)) {
         return pickLine(`${botTrashTalk ? 'trash' : 'casual'}_bot_losing_big`, bank.bot_losing_big);
       }
       return null;
     }
 
     // Normal quiet moves: keep conversational & sporadic
-    const chance = botTrashTalk ? 0.28 : 0.18;
+    const chance = botTrashTalk ? 0.25 : 0.16;
     if (Math.random() > chance) {
       return null;
     }
   }
 
   // Sometimes be quiet and let a ridiculous blunder speak for itself!
-  if (event === 'player_blunder' && Math.random() < 0.12) {
+  if (event === 'player_blunder' && Math.random() < 0.15) {
     return null;
   }
 
   // Avoid over-talking on minor pawn captures
   if (event === 'bot_capture' || event === 'player_capture') {
-    const chance = botTrashTalk ? 0.65 : 0.4;
+    const chance = botTrashTalk ? 0.55 : 0.35;
     if (Math.random() > chance) {
       return null;
     }
@@ -375,6 +392,7 @@ export function getBotEventMessage(
 
 /**
  * Generates an interactive reply when the human player sends a chat message to the bot!
+ * Keeps emojis mostly reserved for big moments/blunders while responding naturally to user text.
  */
 export function getBotChatReply(
   userText: string,
@@ -410,112 +428,113 @@ export function getBotChatReply(
       if (context?.lastPlayerBlunder) {
         return pickLine('reply_trash_blunder_talk', [
           'all that talking just to play THAT move is crazy 💀',
-          'talking crazy after playing THAT move is wild 😭🤡',
-          'bro blundered his whole position and still got the audacity to type 💀😂',
+          'talking crazy after playing THAT move is wild 🤡',
+          'bro blundered his whole position and still got the audacity to type',
         ]);
       }
       return pickLine('reply_trash_swear', [
         'all that talking just to play THAT move is crazy 💀',
-        'bro typing whole essays while his position is on life support 😭',
-        'loudest player with the worst moves i have ever seen 🤡😂',
-        'keep talking it is gonna make this checkmate twice as funny 💀',
-        'talk all you want bro the board is literally screaming for help 😭🙏',
+        'bro typing whole essays while his position is on life support',
+        'loudest player with the worst moves i have ever seen 🤡',
+        'keep talking it is gonna make this checkmate twice as funny',
+        'talk all you want bro the board is literally screaming for help',
       ]);
     }
 
     if (hasExcuse) {
       return pickLine('reply_trash_excuse', [
-        'misclick excuse in big 2026 😭🙏',
-        'blaming lag on a turn-based board game is crazy 😂😂',
-        'classic cope 💀 just hold the L',
-        'aint nobody buying that excuse bro 😭🗿',
+        'misclick excuse in big 2026 😭',
+        'blaming lag on a turn-based board game is crazy',
+        'classic cope, just hold the L',
+        'aint nobody buying that excuse bro',
       ]);
     }
 
     if (hasQuestionOrHelp) {
       return pickLine('reply_trash_tutor', [
         'do i look like a chess tutor to you 💀 figure it out',
-        'i am not coaching you mid-game bro 😂',
-        'you want advice?? stop playing terrible moves 😭🙏',
-        'figure it out yourself 🗿 i am busy cooking you',
+        'i am not coaching you mid-game bro',
+        'you want advice?? stop playing terrible moves',
+        'figure it out yourself, i am busy cooking you',
       ]);
     }
 
     if (hasGreeting) {
       return pickLine('reply_trash_hi', [
-        'save the small talk bro you are getting cooked either way 💀',
-        'yo gl 😭 you are deadass gonna need it on ' + difficulty + ' mode 😂',
-        'sup 🙏 try to last more than 15 moves please',
+        'save the small talk bro you are getting cooked either way',
+        'yo gl, you are deadass gonna need it on ' + difficulty + ' mode',
+        'sup, try to last more than 15 moves please',
       ]);
     }
 
     if (hasGG) {
       return pickLine('reply_trash_gg', [
         'gg. well actually not gg. that was a public execution 😭',
-        'yeah gg... for ME 😂😂',
+        'yeah gg... for ME',
         'at least you know when you got cooked 💀',
       ]);
     }
 
     if (hasRematch) {
       return pickLine('reply_trash_rematch', [
-        'say less, click rematch and catch another L 😭💀',
-        'i will gladly farm you again let us run it 😂',
-        'bet 🗿 prepare to get cooked again',
+        'say less, click rematch and catch another L 💀',
+        'i will gladly farm you again let us run it',
+        'bet, prepare to get cooked again',
       ]);
     }
 
     if (hasEmoticon) {
       return pickLine('reply_trash_emo', [
-        'spamming emojis will not save your king bro 😭💀',
-        'smile now because your position is about to collapse 😂',
-        '🤡🗿',
+        'spamming emojis will not save your king bro 💀',
+        'smile now because your position is about to collapse',
+        'stop playing with emoticons and look at the board',
       ]);
     }
 
     return pickLine('reply_trash_general', [
-      'bro is yapping in messenger instead of looking at the board 😭💀',
-      'less typing more losing please 😂',
-      'wyd bro make a move 🙏',
-      'all that talking is crazy 💀 just play chess',
-      'you are cooked btw icl 🗿',
+      'bro is yapping in messenger instead of looking at the board',
+      'less typing more losing please',
+      'wyd bro make a move',
+      'all that talking is crazy, just play chess',
+      'you are cooked btw icl',
     ]);
   }
 
   // Chill casual lowercase texting replies (when Bot Trash Talk is OFF)
   if (hasGreeting) {
     return pickLine('reply_casual_hi', [
-      'yo glhf :-)',
-      'sup! good luck today :-D',
+      'yo glhf',
+      'sup! good luck today',
+      'yo ready to play',
     ]);
   }
   if (hasGG) {
     return pickLine('reply_casual_gg', [
-      'gg! that was actually a fun game :-D',
-      'wp! down for another one anytime :-)',
+      'gg! that was actually a fun game',
+      'wp! down for another one anytime',
     ]);
   }
   if (hasRematch) {
     return pickLine('reply_casual_rematch', [
-      'bet let us run it back :-D',
-      'always down for a rematch :-)',
+      'bet let us run it back',
+      'always down for a rematch',
     ]);
   }
   if (hasEmoticon) {
     return pickLine('reply_casual_emo', [
-      'ahaha love the classic msn icons :-D',
-      'XD :-)',
+      'ahaha love the classic msn icons',
+      'good vibes, let us see this move',
     ]);
   }
   if (hasTrashOrSwear) {
     return pickLine('reply_casual_chill', [
-      'yo chill 😂 if you want me to talk back flip trash talk on :-P',
-      'lol alright alright let us just play :-)',
+      'yo chill, if you want me to talk back flip trash talk on',
+      'lol alright alright let us just play',
     ]);
   }
   return pickLine('reply_casual_general', [
-    'fr tbh :-)',
+    'fr tbh',
     'haha curious what move you got next',
-    'lowkey fun game so far :-D',
+    'lowkey fun game so far',
   ]);
 }

@@ -104,8 +104,12 @@ export const BotGame: React.FC<BotGameProps> = ({
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
   const [isBotTyping, setIsBotTyping] = useState<boolean>(false);
   const [soundOn, setSoundOn] = useState<boolean>(isSoundEnabled());
-  const [showResignModal, setShowResignModal] = useState<boolean>(false);
   const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
+
+  const [showResignModal, setShowResignModal] = useState<boolean>(false);
+  const [showOfferDrawModal, setShowOfferDrawModal] = useState<boolean>(false);
+  const [drawResultModal, setDrawResultModal] = useState<{ accepted: boolean; message: string } | null>(null);
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState<boolean>(false);
 
   const diffCfg = BOT_DIFFICULTY_CONFIG[difficulty];
   const botDisplayName = diffCfg.botTitle;
@@ -237,6 +241,19 @@ export const BotGame: React.FC<BotGameProps> = ({
     }, 250);
     return () => window.clearTimeout(t);
   }, [matchKey, triggerBotEvent]);
+
+  // Prompt before navigating away or refreshing during an active game
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (status === 'in_progress') {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your match is still in progress and leaving will cause you to forfeit.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [status]);
 
   // Clock countdown interval
   useEffect(() => {
@@ -540,7 +557,6 @@ export const BotGame: React.FC<BotGameProps> = ({
     setIsBotThinking(false);
     setIsBotTyping(false);
     setSystemAlert(null);
-    setShowResignModal(false);
 
     setChatMessages((prev) => [
       ...prev,
@@ -557,7 +573,24 @@ export const BotGame: React.FC<BotGameProps> = ({
     setMatchKey((k) => k + 1);
   };
 
-  const handleOfferDraw = () => {
+  const handleRequestLeave = () => {
+    playWindowsClick();
+    if (status === 'in_progress') {
+      setShowLeaveConfirmModal(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    if (status === 'in_progress') {
+      executeResign();
+    }
+    setShowLeaveConfirmModal(false);
+    onBack();
+  };
+
+  const executeOfferDraw = () => {
     if (status !== 'in_progress') return;
     playWindowsClick();
 
@@ -575,32 +608,27 @@ export const BotGame: React.FC<BotGameProps> = ({
       setIsBotThinking(false);
       playWindowsChord();
 
-      setSystemAlert({
-        id: `draw-acc-${Date.now()}`,
-        type: 'info',
-        title: 'System message',
-        message: `${botDisplayName} accepted your draw offer.`,
-        autoDismissMs: 5000,
+      setDrawResultModal({
+        accepted: true,
+        message: `${botDisplayName} accepted your draw offer! The game ended in a draw.`,
       });
 
       triggerBotEvent('draw_accept', {}, 350);
     } else {
       playWindowsDing();
-      setSystemAlert({
-        id: `draw-dec-${Date.now()}`,
-        type: 'info',
-        title: 'System message',
-        message: `${botDisplayName} declined your draw offer.`,
-        autoDismissMs: 4000,
+
+      setDrawResultModal({
+        accepted: false,
+        message: `${botDisplayName} evaluated the position and declined your draw offer. Continue playing!`,
       });
 
       triggerBotEvent('draw_decline', {}, 350);
     }
   };
 
-  const handleConfirmResign = () => {
+  const executeResign = () => {
+    if (status !== 'in_progress') return;
     playWindowsStop();
-    setShowResignModal(false);
     setStatus('resigned');
     setWinner(botColor);
     setWinReason(`${displayPlayerName} resigned. ${botDisplayName} wins!`);
@@ -643,6 +671,7 @@ export const BotGame: React.FC<BotGameProps> = ({
   };
 
   const handleToggleBotMessages = (checked: boolean) => {
+    if (status === 'in_progress') return;
     playWindowsClick();
     setBotMessages(checked);
     botMessagesRef.current = checked;
@@ -654,6 +683,7 @@ export const BotGame: React.FC<BotGameProps> = ({
   };
 
   const handleToggleBotTrashTalk = (checked: boolean) => {
+    if (status === 'in_progress') return;
     playWindowsClick();
     setBotTrashTalk(checked);
     botTrashTalkRef.current = checked;
@@ -662,7 +692,7 @@ export const BotGame: React.FC<BotGameProps> = ({
         setBotMessages(true);
         botMessagesRef.current = true;
       }
-      // Immediate reaction if toggled on mid-game!
+      // Immediate reaction if toggled on!
       window.setTimeout(() => {
         triggerBotEvent('trash_talk_toggled_on', {}, 320);
       }, 60);
@@ -693,10 +723,7 @@ export const BotGame: React.FC<BotGameProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => {
-                playWindowsClick();
-                onBack();
-              }}
+              onClick={handleRequestLeave}
               title="Return to Lobby"
               className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center leading-none cursor-pointer"
             >
@@ -709,10 +736,7 @@ export const BotGame: React.FC<BotGameProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-0.5 border-b border-[#808080] text-xs font-sans bg-[#d4d0c8] text-black">
           <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => {
-                playWindowsClick();
-                onBack();
-              }}
+              onClick={handleRequestLeave}
               className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
             >
               <ChessReturnLobbyIcon size={15} />
@@ -741,12 +765,14 @@ export const BotGame: React.FC<BotGameProps> = ({
             <span className="font-bold">Skill:</span>
             <select
               value={difficulty}
+              disabled={status === 'in_progress'}
               onChange={(e) => {
+                if (status === 'in_progress') return;
                 playWindowsClick();
                 setDifficulty(e.target.value as BotDifficulty);
               }}
-              className="bg-white border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-1.5 py-0.5 text-[11px] font-bold text-black focus:outline-hidden cursor-pointer"
-              title="Change Bot Difficulty"
+              className="bg-white disabled:bg-[#d4d0c8] disabled:text-[#606060] disabled:cursor-not-allowed border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-1.5 py-0.5 text-[11px] font-bold text-black focus:outline-hidden cursor-pointer"
+              title={status === 'in_progress' ? 'Bot difficulty is locked during the match' : 'Change Bot Difficulty'}
             >
               <option value="easy">Easy (600)</option>
               <option value="medium">Medium (1200)</option>
@@ -919,7 +945,10 @@ export const BotGame: React.FC<BotGameProps> = ({
                 {!isGameOver && (
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={handleOfferDraw}
+                      onClick={() => {
+                        playWindowsClick();
+                        setShowOfferDrawModal(true);
+                      }}
                       className="px-2.5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black font-sans text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <RetroHandshakeIcon size={14} />
@@ -940,26 +969,45 @@ export const BotGame: React.FC<BotGameProps> = ({
                 )}
               </div>
 
-              {/* Live Bot Options Bar (Bot Messages & Bot Trash Talk) */}
+              {/* Bot Options Bar (Locked during match) */}
               <div className="bg-[#ece9d8] border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] px-2.5 py-1 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="text-[11px] font-bold text-[#303030]">Bot Options:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-[#303030]">Bot Options:</span>
+                  {status === 'in_progress' && (
+                    <span className="text-[10px] text-[#606060] font-sans italic">
+                      (locked during match)
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-4 flex-wrap">
-                  <label className="inline-flex items-center gap-1.5 cursor-pointer font-bold text-[11px] text-black">
+                  <label
+                    title={status === 'in_progress' ? 'Bot settings cannot be changed during a match' : undefined}
+                    className={`inline-flex items-center gap-1.5 font-bold text-[11px] ${
+                      status === 'in_progress' ? 'cursor-not-allowed text-[#707070]' : 'cursor-pointer text-black'
+                    }`}
+                  >
                     <input
                       type="checkbox"
                       checked={botMessages}
+                      disabled={status === 'in_progress'}
                       onChange={(e) => handleToggleBotMessages(e.target.checked)}
-                      className="cursor-pointer"
+                      className={status === 'in_progress' ? 'cursor-not-allowed' : 'cursor-pointer'}
                     />
                     <span>Bot Messages</span>
                   </label>
 
-                  <label className="inline-flex items-center gap-1.5 cursor-pointer font-bold text-[11px] text-[#880000]">
+                  <label
+                    title={status === 'in_progress' ? 'Bot settings cannot be changed during a match' : undefined}
+                    className={`inline-flex items-center gap-1.5 font-bold text-[11px] ${
+                      status === 'in_progress' ? 'cursor-not-allowed text-[#996060]' : 'cursor-pointer text-[#880000]'
+                    }`}
+                  >
                     <input
                       type="checkbox"
                       checked={botTrashTalk}
+                      disabled={status === 'in_progress'}
                       onChange={(e) => handleToggleBotTrashTalk(e.target.checked)}
-                      className="cursor-pointer"
+                      className={status === 'in_progress' ? 'cursor-not-allowed' : 'cursor-pointer'}
                     />
                     <span>Bot Trash Talk</span>
                   </label>
@@ -1005,7 +1053,7 @@ export const BotGame: React.FC<BotGameProps> = ({
       {/* Classic Windows Resign Confirm Dialog */}
       {showResignModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
-          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
             <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
               <span>Confirm Resignation</span>
               <button
@@ -1022,12 +1070,10 @@ export const BotGame: React.FC<BotGameProps> = ({
               </div>
               <div>
                 <h4 className="font-bold text-xs text-black mb-1">
-                  Are you sure you want to resign against {botDisplayName}?
+                  are you sure you want to resign?
                 </h4>
                 <p className="text-[11px] text-[#404040]">
-                  {botTrashTalk
-                    ? 'Warning: The bot will definitely trash talk you for quitting!'
-                    : 'This will concede the match to the chess bot immediately.'}
+                  This will concede the match to the chess bot immediately.
                 </p>
               </div>
             </div>
@@ -1043,10 +1089,160 @@ export const BotGame: React.FC<BotGameProps> = ({
                 Cancel
               </button>
               <button
-                onClick={handleConfirmResign}
+                onClick={() => {
+                  setShowResignModal(false);
+                  executeResign();
+                }}
                 className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
               >
                 Yes, Resign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offer Draw Modal Dialog */}
+      {showOfferDrawModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Offer Draw</span>
+              <button
+                onClick={() => setShowOfferDrawModal(false)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroHandshakeIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Offer a draw to {botDisplayName}?
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  The bot will analyze the current position and its winning chances before deciding.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setShowOfferDrawModal(false);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowOfferDrawModal(false);
+                  executeOfferDraw();
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#000080] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Yes, Offer Draw
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draw Result Modal Popup Dialog */}
+      {drawResultModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Draw Offer - {drawResultModal.accepted ? 'Accepted' : 'Declined'}</span>
+              <button
+                onClick={() => setDrawResultModal(null)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroHandshakeIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  {drawResultModal.accepted ? 'Draw Offer Accepted' : 'Draw Offer Declined'}
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  {drawResultModal.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setDrawResultModal(null);
+                }}
+                className="px-5 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Leave Match Modal */}
+      {showLeaveConfirmModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Confirm Leave</span>
+              <button
+                onClick={() => setShowLeaveConfirmModal(false)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroWarningIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Are you sure you want to leave the match?
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  Leaving will forfeit this match to the chess bot.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setShowLeaveConfirmModal(false);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Stay in Match
+              </button>
+              <button
+                onClick={() => {
+                  playWindowsStop();
+                  handleConfirmLeave();
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Leave Match
               </button>
             </div>
           </div>

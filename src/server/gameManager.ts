@@ -18,8 +18,10 @@ export class GameManager {
     interval?: NodeJS.Timeout;
   }>();
 
+  public onStateChange?: (code: string) => void;
+
   constructor() {
-    // Periodic cleanup of abandoned/empty rooms older than 2 hours
+    // Periodic cleanup of abandoned/empty rooms older than 1 hour
     setInterval(() => {
       const now = Date.now();
       for (const [code, item] of this.rooms.entries()) {
@@ -30,6 +32,17 @@ export class GameManager {
         }
       }
     }, 60000);
+  }
+
+  public removeWaitingRoom(code: string, hostId: string): boolean {
+    const formatted = code.toUpperCase().trim();
+    const room = this.rooms.get(formatted);
+    if (room && room.state.status === 'waiting' && room.state.hostId === hostId) {
+      if (room.interval) clearInterval(room.interval);
+      this.rooms.delete(formatted);
+      return true;
+    }
+    return false;
   }
 
   public createRoom(params: {
@@ -200,18 +213,44 @@ export class GameManager {
     return { role, state };
   }
 
-  public handleDisconnect(code: string, playerId: string) {
+  public handleDisconnect(code: string, playerId: string): boolean {
     const room = this.getRoom(code);
-    if (!room) return;
+    if (!room) return false;
 
-    if (room.state.whitePlayer?.id === playerId) {
-      room.state.whitePlayer.isConnected = false;
-    } else if (room.state.blackPlayer?.id === playerId) {
-      room.state.blackPlayer.isConnected = false;
+    let didResign = false;
+
+    // If a game was in progress and a player disconnected, leaving the match causes them to resign
+    if (room.state.status === 'in_progress') {
+      if (room.state.whitePlayer?.id === playerId) {
+        room.state.whitePlayer.isConnected = false;
+        room.state.status = 'resigned';
+        room.state.winner = 'b';
+        room.state.winReason = `${room.state.whitePlayer.name} disconnected/left. ${room.state.blackPlayer?.name || 'Black'} wins!`;
+        this.stopClockTimer(code);
+        didResign = true;
+      } else if (room.state.blackPlayer?.id === playerId) {
+        room.state.blackPlayer.isConnected = false;
+        room.state.status = 'resigned';
+        room.state.winner = 'w';
+        room.state.winReason = `${room.state.blackPlayer.name} disconnected/left. ${room.state.whitePlayer?.name || 'White'} wins!`;
+        this.stopClockTimer(code);
+        didResign = true;
+      }
     } else {
-      const spec = room.state.spectators.find(s => s.id === playerId);
-      if (spec) spec.isConnected = false;
+      if (room.state.whitePlayer?.id === playerId) {
+        room.state.whitePlayer.isConnected = false;
+      } else if (room.state.blackPlayer?.id === playerId) {
+        room.state.blackPlayer.isConnected = false;
+      } else {
+        const spec = room.state.spectators.find(s => s.id === playerId);
+        if (spec) spec.isConnected = false;
+      }
     }
+
+    if (this.onStateChange) {
+      this.onStateChange(code);
+    }
+    return didResign;
   }
 
   public makeMove(
@@ -503,11 +542,17 @@ export class GameManager {
         current.state.winner = 'b';
         current.state.winReason = `White ran out of time! ${current.state.blackPlayer?.name || 'Black'} wins!`;
         this.stopClockTimer(code);
+        if (this.onStateChange) {
+          this.onStateChange(code);
+        }
       } else if (current.state.clocks.b <= 0) {
         current.state.status = 'timeout';
         current.state.winner = 'w';
         current.state.winReason = `Black ran out of time! ${current.state.whitePlayer?.name || 'White'} wins!`;
         this.stopClockTimer(code);
+        if (this.onStateChange) {
+          this.onStateChange(code);
+        }
       }
     }, 200);
   }

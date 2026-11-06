@@ -19,6 +19,7 @@ import {
   RetroLightningIcon,
   RetroRefreshIcon,
   RetroDoorIcon,
+  RetroWarningIcon,
   ChessReturnLobbyIcon,
   ChessRematchIcon,
   ChessAcceptRematchIcon,
@@ -32,6 +33,7 @@ import {
   playMoveSound,
   playCaptureSound,
   playWindowsClick,
+  playWindowsStop,
   playWindowsStartup,
 } from '../utils/audio';
 
@@ -57,6 +59,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState<'moves' | 'chat'>('moves');
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
   const [localClocks, setLocalClocks] = useState<{ w: number; b: number }>({ w: 0, b: 0 });
   const [systemAlert, setSystemAlert] = useState<SystemAlert | null>(null);
 
@@ -264,6 +267,35 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     };
   }, [roomState?.status, roomState?.turn, roomState?.timeControl.initialMinutes]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (roomState?.status === 'in_progress' && (userRole === 'white' || userRole === 'black')) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Leaving will cause you to resign.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [roomState?.status, userRole]);
+
+  const handleRequestLeave = () => {
+    playWindowsClick();
+    if (roomState?.status === 'in_progress' && (userRole === 'white' || userRole === 'black')) {
+      setShowLeaveConfirmModal(true);
+    } else {
+      onLeave();
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    if (roomState?.status === 'in_progress' && (userRole === 'white' || userRole === 'black')) {
+      handleResign();
+    }
+    setShowLeaveConfirmModal(false);
+    onLeave();
+  };
+
   const handleMove = (from: string, to: string, promotion?: string) => {
     sendMessage({
       type: 'move',
@@ -317,7 +349,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   }
 
   if (roomState.status === 'waiting') {
-    return <WaitingRoom state={roomState} userRole={userRole} onLeave={onLeave} />;
+    return <WaitingRoom state={roomState} userRole={userRole} playerId={playerId} onLeave={onLeave} />;
   }
 
   const isMyTurn =
@@ -350,12 +382,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => {
-                playWindowsClick();
-                onLeave();
-              }}
+              onClick={handleRequestLeave}
               title="Close / Leave Room"
-              className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center leading-none"
+              className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center leading-none cursor-pointer"
             >
               ×
             </button>
@@ -366,10 +395,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         <div className="flex items-center justify-between px-2 py-0.5 border-b border-[#808080] text-xs font-sans bg-[#d4d0c8] text-black">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                playWindowsClick();
-                onLeave();
-              }}
+              onClick={handleRequestLeave}
               className="hover:bg-[#0a246a] hover:text-white px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
             >
               <ChessReturnLobbyIcon size={16} />
@@ -636,6 +662,58 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 
       {showShareModal && (
         <ShareModal roomCode={roomState.code} onClose={() => setShowShareModal(false)} />
+      )}
+
+      {/* Confirm Leave Match Modal */}
+      {showLeaveConfirmModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Confirm Leave</span>
+              <button
+                onClick={() => setShowLeaveConfirmModal(false)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroWarningIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Are you sure you want to leave the match?
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  Leaving the match while in progress will cause you to resign.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setShowLeaveConfirmModal(false);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Stay in Match
+              </button>
+              <button
+                onClick={() => {
+                  playWindowsStop();
+                  handleConfirmLeave();
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Leave & Resign
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Retro Windows System Alert Toast in bottom-right */}

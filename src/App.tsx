@@ -11,7 +11,7 @@ import {
   playWindowsStop,
   playWindowsNotify,
 } from './utils/audio';
-import { RetroSpeakerIcon, RetroPawnIcon } from './components/RetroIcons';
+import { RetroSpeakerIcon, RetroPawnIcon, RetroWarningIcon } from './components/RetroIcons';
 
 function getOrCreatePlayerId(): string {
   // Use sessionStorage so multiple tabs on the same computer have distinct player IDs
@@ -47,12 +47,13 @@ export default function App() {
     preferredColor: 'random',
     timeControl: { initialMinutes: 0, incrementSeconds: 0, name: 'Casual (No Clock)' },
     botMessages: true,
-    botTrashTalk: true,
+    botTrashTalk: false,
   });
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [pendingView, setPendingView] = useState<'lobby' | 'bot' | 'solo' | null>(null);
   const [systemTime, setSystemTime] = useState('');
 
   // Clock in system tray
@@ -150,6 +151,28 @@ export default function App() {
     window.history.pushState({}, '', url.toString());
   };
 
+  const executeViewChange = (targetView: 'lobby' | 'bot' | 'solo') => {
+    playWindowsClick();
+    if (targetView === 'lobby') {
+      handleLeaveMatch();
+    } else if (targetView === 'bot') {
+      setCurrentRoomCode('');
+      setCurrentView('bot');
+    } else if (targetView === 'solo') {
+      setCurrentRoomCode('');
+      setCurrentView('solo');
+    }
+  };
+
+  const handleMenuNavigation = (targetView: 'lobby' | 'bot' | 'solo') => {
+    setShowStartMenu(false);
+    if ((currentView === 'multiplayer' || currentView === 'bot') && currentView !== targetView) {
+      setPendingView(targetView);
+    } else {
+      executeViewChange(targetView);
+    }
+  };
+
   const toggleSound = () => {
     playWindowsClick();
     const next = !soundOn;
@@ -227,29 +250,19 @@ export default function App() {
           {/* Menu items */}
           <div className="p-1 w-52 flex flex-col text-xs font-sans">
             <button
-              onClick={() => {
-                setShowStartMenu(false);
-                handleLeaveMatch();
-              }}
+              onClick={() => handleMenuNavigation('lobby')}
               className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer font-bold"
             >
               Lobby & Home
             </button>
             <button
-              onClick={() => {
-                setShowStartMenu(false);
-                playWindowsClick();
-                setCurrentView('bot');
-              }}
+              onClick={() => handleMenuNavigation('bot')}
               className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer"
             >
               Play vs. Chess Bot
             </button>
             <button
-              onClick={() => {
-                setShowStartMenu(false);
-                setCurrentView('solo');
-              }}
+              onClick={() => handleMenuNavigation('solo')}
               className="px-3 py-2 text-left hover:bg-[#0a246a] hover:text-white flex items-center cursor-pointer"
             >
               Pass & Play (Local)
@@ -367,13 +380,16 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-black">Matt's Chess</h3>
-                  <p className="text-[11px] text-[#505050]">Version 1.02 (Build 2004)</p>
+                  <p className="text-[11px] text-[#505050]">Version 1.03 (Build 2004)</p>
                 </div>
               </div>
 
               <div className="bg-white border-2 border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] p-2 text-xs text-black mb-3 space-y-1">
                 <p>hi im matt and i made chess website with google</p>
-                <p className="text-[10px] text-[#606060] pt-1">
+                <p className="text-[11px] font-bold text-[#000080]">
+                  created by matthew jagod 11/03/26
+                </p>
+                <p className="text-[10px] text-[#606060] pt-1 border-t border-[#d4d0c8]">
                   Licensed to: {playerName.trim() || 'Guest'}
                 </p>
               </div>
@@ -389,6 +405,59 @@ export default function App() {
                   OK
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Confirm Leave Match Modal via Menu Navigation */}
+      {pendingView && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-[#d4d0c8] border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] p-1 shadow-[4px_4px_0px_rgba(0,0,0,0.5)] max-w-sm w-full select-none">
+            <div className="bg-gradient-to-r from-[#0a246a] to-[#a6caf0] text-white font-bold text-xs px-2 py-1 flex items-center justify-between mb-3 select-none">
+              <span>Confirm Leave</span>
+              <button
+                onClick={() => setPendingView(null)}
+                className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-3 py-2 flex items-start gap-3 mb-4">
+              <div className="shrink-0 pt-0.5">
+                <RetroWarningIcon size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-xs text-black mb-1">
+                  Are you sure you want to leave the active match?
+                </h4>
+                <p className="text-[11px] text-[#404040]">
+                  Leaving the current screen will forfeit this match.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-2 pb-2">
+              <button
+                onClick={() => {
+                  playWindowsClick();
+                  setPendingView(null);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-black text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Stay in Match
+              </button>
+              <button
+                onClick={() => {
+                  playWindowsStop();
+                  const target = pendingView;
+                  setPendingView(null);
+                  if (target) executeViewChange(target);
+                }}
+                className="px-4 py-1 bg-[#d4d0c8] hover:bg-[#ece9d8] text-[#990000] text-xs font-bold border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
+              >
+                Leave Match
+              </button>
             </div>
           </div>
         </div>

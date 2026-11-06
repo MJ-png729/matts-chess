@@ -85,8 +85,25 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     const pieceOnSquare = chess.get(square);
 
     if (selectedSquare) {
+      const movingPiece = chess.get(selectedSquare);
+
+      // Support castling by clicking the king then clicking the respective rook
+      if (
+        movingPiece?.type === 'k' &&
+        pieceOnSquare?.type === 'r' &&
+        pieceOnSquare.color === movingPiece.color
+      ) {
+        const file = square[0];
+        const rank = square[1];
+        // Kingside castle is to g-file, queenside is to c-file
+        const castleTarget = (file === 'h' ? `g${rank}` : file === 'a' ? `c${rank}` : null) as Square | null;
+        if (castleTarget && legalTargetsMap.has(castleTarget)) {
+          executeMove(selectedSquare, castleTarget);
+          return;
+        }
+      }
+
       if (legalTargetsMap.has(square)) {
-        const movingPiece = chess.get(selectedSquare);
         const isPawn = movingPiece?.type === 'p';
         const isPromoting =
           isPawn &&
@@ -158,11 +175,31 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
     const fromSquare = e.dataTransfer.getData('text/plain') as Square;
     if (!fromSquare || fromSquare === toSquare) return;
 
+    const movingPiece = chess.get(fromSquare);
+    const targetPiece = chess.get(toSquare);
+
+    // Support dropping king onto rook for castling
+    if (
+      movingPiece?.type === 'k' &&
+      targetPiece?.type === 'r' &&
+      targetPiece.color === movingPiece.color
+    ) {
+      const file = toSquare[0];
+      const rank = toSquare[1];
+      const castleTarget = (file === 'h' ? `g${rank}` : file === 'a' ? `c${rank}` : null) as Square | null;
+      if (castleTarget) {
+        const moves = chess.moves({ square: fromSquare, verbose: true });
+        if (moves.some((m) => m.to === castleTarget)) {
+          executeMove(fromSquare, castleTarget);
+          return;
+        }
+      }
+    }
+
     const moves = chess.moves({ square: fromSquare, verbose: true });
     const targetMove = moves.find((m) => m.to === toSquare);
 
     if (targetMove) {
-      const movingPiece = chess.get(fromSquare);
       const isPromoting =
         movingPiece?.type === 'p' &&
         ((movingPiece.color === 'w' && toSquare.endsWith('8')) ||
@@ -255,8 +292,8 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                     <div className="absolute w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-black/40 pointer-events-none z-20" />
                   )}
 
-                  {/* Move Hint - Capture target ring */}
-                  {isTarget && (isCaptureTarget || piece) && (
+                  {/* Move Hint - Capture target ring (including en passant on empty square) */}
+                  {isTarget && (isCaptureTarget || !!piece) && (
                     <div className="absolute inset-1 rounded-full border-3 border-black/40 pointer-events-none z-20" />
                   )}
                 </div>

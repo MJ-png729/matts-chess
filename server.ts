@@ -58,6 +58,19 @@ function broadcastToRoom(roomCode: string, message: ServerMessage, excludeWs?: W
   }
 }
 
+// Hook gameManager state changes (e.g. clock timeouts or disconnects) into WebSocket broadcasts
+gameManager.onStateChange = (roomCode: string) => {
+  broadcastRoomState(roomCode);
+  const room = gameManager.getRoom(roomCode);
+  if (room && room.state.status !== 'in_progress' && room.state.status !== 'waiting') {
+    broadcastToRoom(roomCode, {
+      type: 'game_over',
+      winner: room.state.winner,
+      reason: room.state.winReason || 'Game over',
+    });
+  }
+};
+
 // REST Endpoints
 app.post('/api/rooms', (req, res) => {
   try {
@@ -78,6 +91,16 @@ app.post('/api/rooms', (req, res) => {
     res.json({ roomCode, state: room?.state });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to create room' });
+  }
+});
+
+app.delete('/api/rooms/:code', (req, res) => {
+  try {
+    const { hostId } = req.body || {};
+    const success = gameManager.removeWaitingRoom(req.params.code, hostId);
+    res.json({ success });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to delete room' });
   }
 });
 

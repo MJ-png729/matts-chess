@@ -7,16 +7,31 @@ import { playWindowsClick, playWindowsNotify } from '../utils/audio';
 interface WaitingRoomProps {
   state: RoomState;
   userRole: 'white' | 'black' | 'spectator';
+  playerId: string;
   onLeave: () => void;
 }
 
-export const WaitingRoom: React.FC<WaitingRoomProps> = ({ state, userRole, onLeave }) => {
+export const WaitingRoom: React.FC<WaitingRoomProps> = ({ state, userRole, playerId, onLeave }) => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const inviteUrl = typeof window !== 'undefined'
     ? `${window.location.origin}${window.location.pathname}?room=${state.code}`
     : `/?room=${state.code}`;
+
+  const handleCancelAndLeave = async () => {
+    playWindowsClick();
+    try {
+      await fetch(`/api/rooms/${state.code}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostId: playerId }),
+      });
+    } catch (e) {
+      // Ignore network errors on cancel
+    }
+    onLeave();
+  };
 
   const copyCode = async () => {
     try {
@@ -55,11 +70,8 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ state, userRole, onLea
             <span>Matt's Chess - Waiting for Opponent [Lobby {state.code}]</span>
           </div>
           <button
-            onClick={() => {
-              playWindowsClick();
-              onLeave();
-            }}
-            className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center"
+            onClick={handleCancelAndLeave}
+            className="w-4 h-4 bg-[#d4d0c8] text-black text-[10px] font-bold border border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] flex items-center justify-center cursor-pointer"
           >
             ×
           </button>
@@ -150,11 +162,8 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ state, userRole, onLea
 
           <div className="flex justify-start">
             <button
-              onClick={() => {
-                playWindowsClick();
-                onLeave();
-              }}
-              className="px-4 py-1 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff]"
+              onClick={handleCancelAndLeave}
+              className="px-4 py-1 bg-[#d4d0c8] hover:bg-white text-black font-bold text-xs border-2 border-t-[#ffffff] border-l-[#ffffff] border-b-[#404040] border-r-[#404040] active:border-t-[#404040] active:border-l-[#404040] active:border-b-[#ffffff] active:border-r-[#ffffff] cursor-pointer"
             >
               ← Cancel & Back to Menu
             </button>
