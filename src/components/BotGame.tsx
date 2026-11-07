@@ -637,7 +637,7 @@ export const BotGame: React.FC<BotGameProps> = ({
     triggerBotEvent('player_resign', {}, 350);
   };
 
-  const handleSendChatMessage = (text: string) => {
+  const handleSendChatMessage = async (text: string) => {
     const userMsg: ChatMessage = {
       id: `usr-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
       senderId: playerId,
@@ -647,15 +647,58 @@ export const BotGame: React.FC<BotGameProps> = ({
     };
     setChatMessages((prev) => [...prev, userMsg]);
 
-    if (botMessages) {
-      const reply = getBotChatReply(text, botMessages, botTrashTalk, difficulty, {
+    if (!botMessages) return;
+
+    setIsBotTyping(true);
+
+    let replyText: string | null = null;
+
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), 10000);
+
+    try {
+      // 1. Try server-side dynamic Gemini AI endpoint for unscripted conversation
+      const res = await fetch('/api/bot/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: abortController.signal,
+        body: JSON.stringify({
+          message: text,
+          botTrashTalk,
+          difficulty,
+          playerName: displayPlayerName,
+          fen: chessRef.current.fen(),
+          evalCp: lastEvalCpRef.current,
+          moveCount: chessRef.current.history().length,
+          recentMessages: chatMessages.slice(-5),
+        }),
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reply && typeof data.reply === 'string' && data.reply.trim().length > 0) {
+          replyText = data.reply.trim();
+        }
+      }
+    } catch (e) {
+      clearTimeout(timer);
+      console.warn('Dynamic bot chat fetch error, falling back to local engine:', e);
+    }
+
+    // 2. If Gemini is unavailable or failed, fallback to contextual dialogue generator
+    if (!replyText) {
+      replyText = getBotChatReply(text, botMessages, botTrashTalk, difficulty, {
         lastPlayerBlunder: lastPlayerBlunderRef.current,
         evalCp: lastEvalCpRef.current,
       });
-      if (reply) {
-        const typingMs = 420 + Math.min(550, reply.length * 10);
-        appendBotChat(reply, typingMs);
-      }
+    }
+
+    if (replyText) {
+      const typingMs = 420 + Math.min(550, replyText.length * 10);
+      appendBotChat(replyText, typingMs);
+    } else {
+      setIsBotTyping(false);
     }
   };
 

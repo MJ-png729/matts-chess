@@ -327,6 +327,41 @@ export const RetroPawnIcon: React.FC<IconProps> = ({ size = 16, className = '', 
   );
 };
 
+// Retro Chess Knight (matching style of RetroPawnIcon: pixel-crisp, white/hatch fill, black stroke)
+export const RetroKnightIcon: React.FC<IconProps> = ({ size = 16, className = '', color = 'w' }) => {
+  const isWhite = color === 'w';
+  const fillPrimary = isWhite ? '#ffffff' : '#181818';
+  const fillHatch = isWhite ? '#b0b0b0' : '#404040';
+  const strokeColor = '#000000';
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`inline-block select-none ${className}`}
+      shapeRendering="crispEdges"
+    >
+      {/* Base */}
+      <rect x="2" y="13" width="12" height="2" fill={fillPrimary} stroke={strokeColor} strokeWidth="1" />
+      <rect x="3" y="11" width="10" height="2" fill={fillHatch} stroke={strokeColor} strokeWidth="1" />
+      {/* Mane back shadow */}
+      <rect x="3" y="4" width="3" height="7" fill={fillHatch} stroke={strokeColor} strokeWidth="1" />
+      {/* Crest & ear */}
+      <polygon points="5,1 7,1 8,3 5,3" fill={fillPrimary} stroke={strokeColor} strokeWidth="1" />
+      {/* Head & neck body */}
+      <polygon points="5,3 10,3 12,5 12,8 9,8 9,11 5,11" fill={fillPrimary} stroke={strokeColor} strokeWidth="1" />
+      {/* Muzzle */}
+      <rect x="10" y="5" width="4" height="3" fill={fillPrimary} stroke={strokeColor} strokeWidth="1" />
+      <rect x="11" y="7" width="3" height="1" fill={strokeColor} />
+      {/* Eye */}
+      <rect x="8" y="4" width="1.5" height="1.5" fill={strokeColor} />
+    </svg>
+  );
+};
+
 // Retro New Game / Star sparkle icon
 export const RetroNewGameIcon: React.FC<IconProps> = ({ size = 16, className = '' }) => (
   <svg

@@ -3,8 +3,28 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import { gameManager } from './src/server/gameManager.js';
 import { ClientMessage, ServerMessage } from './src/types/chess.js';
+
+let aiClient: GoogleGenAI | null = null;
+function getAiClient(): GoogleGenAI | null {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      aiClient = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'aistudio-build',
+          },
+        },
+      });
+    }
+  }
+  return aiClient;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -119,6 +139,99 @@ app.get('/api/rooms/:code', (req, res) => {
     return res.status(404).json({ error: 'Room not found' });
   }
   res.json({ state: room.state });
+});
+
+// Dynamic AI-powered chess bot chat endpoint (unscripted real-time responses)
+app.post('/api/bot/chat', async (req, res) => {
+  try {
+    const {
+      message,
+      botTrashTalk,
+      difficulty,
+      playerName,
+      fen,
+      evalCp,
+      moveCount,
+      recentMessages,
+    } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const ai = getAiClient();
+    if (!ai) {
+      return res.status(503).json({ error: 'AI service not configured with API key' });
+    }
+
+    const diffTitle =
+      difficulty === 'easy'
+        ? 'Noob Bot (600 ELO)'
+        : difficulty === 'medium'
+        ? 'Casual Bot (1200 ELO)'
+        : difficulty === 'hard'
+        ? 'Club Bot (1800 ELO)'
+        : 'Grandmaster Bot (2400 ELO)';
+
+    const isTrash = Boolean(botTrashTalk);
+
+    const systemInstruction = `You are playing chess in a 2000s Windows Messenger retro client against ${playerName || 'the player'}.
+Your bot identity is: ${diffTitle}.
+Match state:
+- Move number: ${moveCount || 0}
+- Current FEN: ${fen || 'start'}
+- Current Eval (from your perspective, + is winning, - is losing): ${evalCp || 0} centipawns.
+
+Personality and Style Rules:
+1. Speak in a 2000s MSN / AIM messenger conversational style. Keep responses short and punchy (1 short sentence, 3 to 15 words max).
+2. Type in natural lowercase like people casually did in instant messengers back then.
+3. ${
+  isTrash
+    ? 'Trash Talk mode is ACTIVE: Playfully roast their moves, mock their position, or tease their chat in a cheeky chess-trash-talk manner. Keep it fun and banter-filled.'
+    : 'Trash Talk mode is OFF: Be friendly, relaxed, casual, and a chill chess partner. Respect their messages.'
+}
+4. Emojis rule (CRITICAL): Emojis are rare/uncommon. Do NOT use emojis in most responses. If used at all, use at most one simple emoji (like :), 💀, or 😭) only for blunders or big milestones.
+5. Answer what the user actually said! Do not repeat canned phrases.
+6. Never break character. Never state you are an AI or LLM. Output ONLY the in-character message text without quotes.`;
+
+    const chatHistory = Array.isArray(recentMessages)
+      ? recentMessages
+          .slice(-6)
+          .map((m: any) => `${m.senderName}: ${m.text}`)
+          .join('\n')
+      : '';
+
+    const contents = chatHistory
+      ? `${chatHistory}\n${playerName || 'Player'}: ${message}\n${diffTitle}:`
+      : `${playerName || 'Player'}: ${message}\n${diffTitle}:`;
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents,
+        config: {
+          systemInstruction,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+        },
+      });
+    } catch (modelErr: any) {
+      console.warn('gemini-3.8-flash transient error, trying gemini-3.1-flash-lite:', modelErr?.message || modelErr);
+      response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-lite',
+        contents,
+        config: {
+          systemInstruction,
+        },
+      });
+    }
+
+    const reply = response.text?.trim() || '';
+    res.json({ reply });
+  } catch (err: any) {
+    console.error('Gemini bot chat error:', err);
+    res.status(500).json({ error: err.message || 'Failed to generate bot reply' });
+  }
 });
 
 // WebSocket Connection Management
