@@ -12,6 +12,7 @@ import {
   playWindowsNotify,
 } from './utils/audio';
 import { RetroSpeakerIcon, RetroPawnIcon, RetroWarningIcon } from './components/RetroIcons';
+import { APP_VERSION, APP_BUILD } from './version';
 
 function getOrCreatePlayerId(): string {
   // Use sessionStorage so multiple tabs on the same computer have distinct player IDs
@@ -380,7 +381,7 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-black">Matt's Chess</h3>
-                  <p className="text-[11px] text-[#505050]">Version 1.03 (Build 2004)</p>
+                  <p className="text-[11px] text-[#505050]">Version {APP_VERSION} (Build {APP_BUILD})</p>
                 </div>
               </div>
 

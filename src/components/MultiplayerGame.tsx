@@ -89,16 +89,22 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       setIsConnected(true);
       playWindowsStartup();
 
-      sendMessage({
-        type: 'join',
-        roomCode,
-        playerId,
-        playerName,
-        preferredColor,
-      });
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(
+          JSON.stringify({
+            type: 'join',
+            roomCode,
+            playerId,
+            playerName,
+            preferredColor,
+          })
+        );
+      }
 
       pingIntervalRef.current = setInterval(() => {
-        sendMessage({ type: 'ping' });
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
       }, 10000);
     };
 
@@ -149,8 +155,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
           ) {
             hasTriggeredGameOverRef.current = true;
             const won =
-              (data.state.winner === 'w' && userRole === 'white') ||
-              (data.state.winner === 'b' && userRole === 'black');
+              (data.state.winner === 'w' && calculatedRole === 'white') ||
+              (data.state.winner === 'b' && calculatedRole === 'black');
             playGameEndSound(won);
             if (won) {
               confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -238,7 +244,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         ws.close();
       }
     };
-  }, [roomCode, playerId, playerName, preferredColor, sendMessage, userRole]);
+  }, [roomCode, playerId, playerName, preferredColor]);
 
   useEffect(() => {
     if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);

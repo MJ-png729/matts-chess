@@ -11,6 +11,7 @@ import {
   ChessBotIcon,
 } from './RetroIcons';
 import { playWindowsClick, playWindowsStop, playWindowsStartup } from '../utils/audio';
+import { APP_VERSION_DISPLAY } from '../version';
 
 interface HomeLobbyProps {
   userName: string;
@@ -654,7 +655,7 @@ export const HomeLobby: React.FC<HomeLobbyProps> = ({
             Protocol: WebSocket 2000
           </div>
           <div className="col-span-4 px-2 py-0.5 border border-t-[#808080] border-l-[#808080] border-b-[#ffffff] border-r-[#ffffff] bg-[#ece9d8] truncate text-black font-medium">
-            Matt's Chess Engine v1.03
+            Matt's Chess Engine {APP_VERSION_DISPLAY}
           </div>
         </div>
       </div>

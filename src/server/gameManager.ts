@@ -17,6 +17,7 @@ export class GameManager {
     chess: Chess;
     interval?: NodeJS.Timeout;
   }>();
+  private disconnectTimers = new Map<string, NodeJS.Timeout>();
 
   public onStateChange?: (code: string) => void;
 
@@ -28,6 +29,13 @@ export class GameManager {
         const hasPlayers = (item.state.whitePlayer?.isConnected || item.state.blackPlayer?.isConnected || item.state.spectators.some(s => s.isConnected));
         if (!hasPlayers && (now - item.state.createdAt > 3600000)) {
           if (item.interval) clearInterval(item.interval);
+          const timerKeyPrefix = `${code}_`;
+          for (const [k, t] of this.disconnectTimers.entries()) {
+            if (k.startsWith(timerKeyPrefix)) {
+              clearTimeout(t);
+              this.disconnectTimers.delete(k);
+            }
+          }
           this.rooms.delete(code);
         }
       }
@@ -39,6 +47,13 @@ export class GameManager {
     const room = this.rooms.get(formatted);
     if (room && room.state.status === 'waiting' && room.state.hostId === hostId) {
       if (room.interval) clearInterval(room.interval);
+      const timerKeyPrefix = `${formatted}_`;
+      for (const [key, timer] of this.disconnectTimers.entries()) {
+        if (key.startsWith(timerKeyPrefix)) {
+          clearTimeout(timer);
+          this.disconnectTimers.delete(key);
+        }
+      }
       this.rooms.delete(formatted);
       return true;
     }
@@ -146,6 +161,14 @@ export class GameManager {
 
     const { state } = room;
 
+    // Clear any pending disconnect grace-period timer for this player
+    const timerKey = `${room.state.code}_${player.id}`;
+    const pendingTimer = this.disconnectTimers.get(timerKey);
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      this.disconnectTimers.delete(timerKey);
+    }
+
     // Check if player is already white or black (reconnecting)
     if (state.whitePlayer && state.whitePlayer.id === player.id) {
       state.whitePlayer.isConnected = true;
@@ -217,40 +240,61 @@ export class GameManager {
     const room = this.getRoom(code);
     if (!room) return false;
 
-    let didResign = false;
+    const timerKey = `${room.state.code}_${playerId}`;
+    const existingTimer = this.disconnectTimers.get(timerKey);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      this.disconnectTimers.delete(timerKey);
+    }
 
-    // If a game was in progress and a player disconnected, leaving the match causes them to resign
-    if (room.state.status === 'in_progress') {
-      if (room.state.whitePlayer?.id === playerId) {
-        room.state.whitePlayer.isConnected = false;
-        room.state.status = 'resigned';
-        room.state.winner = 'b';
-        room.state.winReason = `${room.state.whitePlayer.name} disconnected/left. ${room.state.blackPlayer?.name || 'Black'} wins!`;
-        this.stopClockTimer(code);
-        didResign = true;
-      } else if (room.state.blackPlayer?.id === playerId) {
-        room.state.blackPlayer.isConnected = false;
-        room.state.status = 'resigned';
-        room.state.winner = 'w';
-        room.state.winReason = `${room.state.blackPlayer.name} disconnected/left. ${room.state.whitePlayer?.name || 'White'} wins!`;
-        this.stopClockTimer(code);
-        didResign = true;
-      }
+    let isGamePlayer = false;
+    if (room.state.whitePlayer?.id === playerId) {
+      room.state.whitePlayer.isConnected = false;
+      isGamePlayer = true;
+    } else if (room.state.blackPlayer?.id === playerId) {
+      room.state.blackPlayer.isConnected = false;
+      isGamePlayer = true;
     } else {
-      if (room.state.whitePlayer?.id === playerId) {
-        room.state.whitePlayer.isConnected = false;
-      } else if (room.state.blackPlayer?.id === playerId) {
-        room.state.blackPlayer.isConnected = false;
-      } else {
-        const spec = room.state.spectators.find(s => s.id === playerId);
-        if (spec) spec.isConnected = false;
-      }
+      const spec = room.state.spectators.find(s => s.id === playerId);
+      if (spec) spec.isConnected = false;
+    }
+
+    // If a game was in progress and a white or black player disconnected,
+    // grant a 6-second grace period before declaring forfeiture/resignation.
+    // This prevents brief reconnects, tab refreshes, or socket handshakes from instantly ending the match.
+    if (room.state.status === 'in_progress' && isGamePlayer) {
+      const timer = setTimeout(() => {
+        this.disconnectTimers.delete(timerKey);
+        const currentRoom = this.getRoom(code);
+        if (!currentRoom || currentRoom.state.status !== 'in_progress') return;
+
+        const isWhite = currentRoom.state.whitePlayer?.id === playerId;
+        const isBlack = currentRoom.state.blackPlayer?.id === playerId;
+        const playerObj = isWhite ? currentRoom.state.whitePlayer : (isBlack ? currentRoom.state.blackPlayer : null);
+
+        if (playerObj && !playerObj.isConnected) {
+          currentRoom.state.status = 'resigned';
+          if (isWhite) {
+            currentRoom.state.winner = 'b';
+            currentRoom.state.winReason = `${currentRoom.state.whitePlayer?.name || 'White'} disconnected. ${currentRoom.state.blackPlayer?.name || 'Black'} wins!`;
+          } else {
+            currentRoom.state.winner = 'w';
+            currentRoom.state.winReason = `${currentRoom.state.blackPlayer?.name || 'Black'} disconnected. ${currentRoom.state.whitePlayer?.name || 'White'} wins!`;
+          }
+          this.stopClockTimer(code);
+          if (this.onStateChange) {
+            this.onStateChange(code);
+          }
+        }
+      }, 6000);
+
+      this.disconnectTimers.set(timerKey, timer);
     }
 
     if (this.onStateChange) {
       this.onStateChange(code);
     }
-    return didResign;
+    return false;
   }
 
   public makeMove(
@@ -358,6 +402,13 @@ export class GameManager {
     const room = this.getRoom(code);
     if (!room || room.state.status !== 'in_progress') return false;
 
+    const timerKey = `${room.state.code}_${playerId}`;
+    const pendingTimer = this.disconnectTimers.get(timerKey);
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      this.disconnectTimers.delete(timerKey);
+    }
+
     const { state } = room;
     if (state.whitePlayer?.id === playerId) {
       state.status = 'resigned';
@@ -438,6 +489,14 @@ export class GameManager {
   private resetGameForRematch(code: string) {
     const room = this.getRoom(code);
     if (!room) return;
+
+    const timerKeyPrefix = `${code}_`;
+    for (const [key, timer] of this.disconnectTimers.entries()) {
+      if (key.startsWith(timerKeyPrefix)) {
+        clearTimeout(timer);
+        this.disconnectTimers.delete(key);
+      }
+    }
 
     const { state } = room;
     room.chess = new Chess();
